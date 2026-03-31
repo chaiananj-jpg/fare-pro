@@ -5,58 +5,83 @@
 <title>Fare Pro+</title>
 
 <style>
-body { font-family:-apple-system; margin:0; background:#f2f2f2; }
-h2 { text-align:center; margin:10px; }
+body {
+ font-family:-apple-system, BlinkMacSystemFont, sans-serif;
+ margin:0;
+ background:#f2f2f7;
+}
+
+h2 {
+ text-align:center;
+ margin:15px 0;
+ font-weight:600;
+}
 
 .box {
- background:white;
- margin:10px;
- padding:15px;
- border-radius:15px;
- box-shadow:0 4px 10px rgba(0,0,0,0.05);
+ background:rgba(255,255,255,0.7);
+ backdrop-filter: blur(10px);
+ margin:12px;
+ padding:16px;
+ border-radius:20px;
+ box-shadow:0 4px 20px rgba(0,0,0,0.05);
 }
 
-.row { display:flex; justify-content:space-between; align-items:center; }
+.row {
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+}
 
-.value { font-size:24px; font-weight:bold; }
+.value {
+ font-size:28px;
+ font-weight:600;
+}
 
 button {
- width:60px;
- height:50px;
- font-size:20px;
  border:none;
- border-radius:12px;
- background:#007bff;
+ border-radius:14px;
+ background:#007aff;
  color:white;
+ font-size:18px;
 }
 
-button:active { transform:scale(0.95); }
+button:active {
+ transform:scale(0.96);
+ opacity:0.9;
+}
 
 .big {
  width:100%;
- height:55px;
+ height:56px;
  margin-top:10px;
+ font-size:18px;
+ font-weight:600;
 }
 
-.toggle { width:48%; }
+.toggle {
+ width:48%;
+ height:50px;
+}
 
-.active { background:green; }
+.active {
+ background:#34c759;
+}
 
-.warn { color:red; font-weight:bold; }
-.good { color:green; font-weight:bold; }
-.mid { color:orange; font-weight:bold; }
+.warn { color:#ff3b30; font-weight:600; }
+.mid { color:#ff9500; font-weight:600; }
+.good { color:#34c759; font-weight:600; }
 
 </style>
 </head>
 
 <body>
 
-<h2>🚗 Fare Pro+</h2>
+<h2>🚕 Fare Pro</h2>
 
 <!-- INPUT -->
 <div class="box">
 <div class="row">
-<span>Pickup</span>
+<span>📍Pickup</span>
 <div>
 <button onclick="chg('p',-1)">-</button>
 <span class="value" id="p">2</span>
@@ -67,7 +92,7 @@ button:active { transform:scale(0.95); }
 
 <div class="box">
 <div class="row">
-<span>Drop</span>
+<span>🏁Drop</span>
 <div>
 <button onclick="chg('d',-1)">-</button>
 <span class="value" id="d">6</span>
@@ -78,7 +103,7 @@ button:active { transform:scale(0.95); }
 
 <div class="box">
 <div class="row">
-<span>Fuel</span>
+<span>⛽Fuel</span>
 <div>
 <button onclick="chg('f',-1)">-</button>
 <span class="value" id="f">43</span>
@@ -97,16 +122,16 @@ button:active { transform:scale(0.95); }
 <div class="box" id="res"></div>
 
 <!-- ACTION -->
-<button class="big" onclick="saveTrip()">💾 บันทึกงาน</button>
-<button class="big" style="background:red;" onclick="clearData()">🗑 ล้างข้อมูล</button>
+<button class="big" onclick="saveTrip()">💾 บันทึก</button>
+<button class="big" style="background:#ff3b30;" onclick="clearData()">🗑 ล้าง</button>
 
 <!-- DASHBOARD -->
 <div class="box">
-📊 ทั้งหมด<br>
-Trips: <span id="trips">-</span><br>
-Revenue: <span id="rev">-</span><br>
-Profit: <span id="profit">-</span><br>
-Avg: <span id="avg">-</span>
+📊 สรุปทั้งหมด<br>
+Trips: <b><span id="trips">-</span></b><br>
+Revenue: <b><span id="rev">-</span></b><br>
+Profit: <b><span id="profit">-</span></b><br>
+Avg: <b><span id="avg">-</span></b>
 </div>
 
 <div class="box">
@@ -191,28 +216,36 @@ function calc(){
 
  let percent = Math.min(100, Math.max(0, (profit / (m+20)) * 100));
 
- document.getElementById("res").innerHTML = `
-💰 ราคา: <b>${fare}</b> บาท<br>
-💸 ต้นทุน: ${cost.toFixed(0)} บาท<br>
-📈 กำไร: ${profit.toFixed(0)} บาท<br>
+document.getElementById("res").innerHTML = `
+<div style="font-size:18px;">
+💰 <b style="font-size:28px;">${fare}</b> บาท
+</div>
 
-<span class="${status}">${label}</span>
+<div style="margin-top:8px;">
+💸 ต้นทุน ${cost.toFixed(0)} บาท<br>
+📈 กำไร ${profit.toFixed(0)} บาท
+</div>
 
-<div style="margin-top:10px;">
-<div style="height:10px;background:#ddd;border-radius:10px;">
-<div style="width:${percent}%;height:10px;background:${status==='good'?'green':status==='mid'?'orange':'red'};border-radius:10px;"></div>
+<div class="${status}" style="margin-top:8px;">
+${label}
+</div>
+
+<div style="margin-top:12px;">
+<div style="height:8px;background:#e5e5ea;border-radius:10px;">
+<div style="width:${percent}%;height:8px;background:${status==='good'?'#34c759':status==='mid'?'#ff9500':'#ff3b30'};border-radius:10px;"></div>
 </div>
 </div>
 
-<hr>
-📞 ราคาแนะนำ<br>
-🔴 ${low} บาท<br>
-🟡 ${mid} บาท<br>
-🟢 ${high} บาท
+<hr style="margin:12px 0;">
+
+<div style="font-size:14px;color:#666;">
+📞 แนะนำราคา
+</div>
+
+<div style="margin-top:5px;">
+🔴 ${low} | 🟡 ${mid} | 🟢 ${high}
+</div>
 `;
-
- return {fare, profit, d};
-}
 
 function saveTrip(){
 
