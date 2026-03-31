@@ -70,12 +70,34 @@ button:active {
 .warn { color:#ff3b30; font-weight:600; }
 .mid { color:#ff9500; font-weight:600; }
 .good { color:#34c759; font-weight:600; }
+.seg {
+ background:transparent;
+ color:#000;
+ border-radius:10px;
+ height:40px;
+}
 
+.seg.active {
+ background:white;
+ box-shadow:0 2px 5px rgba(0,0,0,0.1);
+}
 </style>
 </head>
 
 <body>
-
+<div style="
+position:sticky;
+top:0;
+background:rgba(255,255,255,0.8);
+backdrop-filter:blur(10px);
+padding:10px;
+text-align:center;
+font-weight:600;
+border-bottom:1px solid #eee;
+z-index:10;
+">
+🚕 Fare Pro
+</div>
 <h2>🚕 Fare Pro</h2>
 
 <!-- INPUT -->
@@ -114,8 +136,15 @@ button:active {
 
 <!-- TRIP TYPE -->
 <div class="box">
-<button class="toggle active" id="one" onclick="tripType('one')">One Way</button>
-<button class="toggle" id="round" onclick="tripType('round')">Round Trip</button>
+<div style="
+display:flex;
+background:#e5e5ea;
+border-radius:12px;
+padding:3px;
+">
+<button id="one" onclick="tripType('one')" class="seg active">เที่ยวเดียว</button>
+<button id="round" onclick="tripType('round')" class="seg">ไป-กลับ</button>
+</div>
 </div>
 
 <!-- RESULT -->
@@ -127,11 +156,24 @@ button:active {
 
 <!-- DASHBOARD -->
 <div class="box">
-📊 สรุปทั้งหมด<br>
-Trips: <b><span id="trips">-</span></b><br>
-Revenue: <b><span id="rev">-</span></b><br>
-Profit: <b><span id="profit">-</span></b><br>
-Avg: <b><span id="avg">-</span></b>
+<div style="display:flex; justify-content:space-between;">
+
+<div>
+<div style="font-size:12px;color:#888;">Trips</div>
+<div style="font-size:20px;"><b id="trips">0</b></div>
+</div>
+
+<div>
+<div style="font-size:12px;color:#888;">Profit</div>
+<div style="font-size:20px;"><b id="profit">0</b></div>
+</div>
+
+<div>
+<div style="font-size:12px;color:#888;">Avg</div>
+<div style="font-size:20px;"><b id="avg">0</b></div>
+</div>
+
+</div>
 </div>
 
 <div class="box">
@@ -263,7 +305,24 @@ function saveTrip(){
 
  alert("บันทึกแล้ว");
 }
+function quickSave(price){
 
+ let p = calc();
+
+ data.push({
+   fare: price,
+   profit: price - (p.fare - p.profit), // recalculated
+   d: p.d,
+   time: new Date().toISOString()
+ });
+
+ localStorage.setItem("fareData", JSON.stringify(data));
+ updateDash();
+
+ navigator.vibrate?.(50); // Android
+
+ alert("บันทึก "+price+" บาท");
+}
 function clearData(){
  if(confirm("ลบข้อมูลทั้งหมด?")){
    localStorage.clear();
@@ -273,7 +332,14 @@ function clearData(){
 }
 
 function updateDash(){
-
+if(data.length === 0){
+ document.getElementById("history").innerHTML = `
+<div style="text-align:center;color:#999;padding:10px;">
+📭 ยังไม่มีงาน<br>
+<small>เริ่มบันทึกเพื่อดูรายงาน</small>
+</div>`;
+ return;
+}
  if(data.length === 0){
   document.getElementById("history").innerHTML = "📭 ยังไม่มีข้อมูล";
   return;
@@ -297,12 +363,26 @@ function updateDash(){
 
  let last5 = data.slice(-5).reverse();
 
- let html = last5.map(x=>{
-   let t=new Date(x.time);
-   let hh=t.getHours().toString().padStart(2,'0');
-   let mm=t.getMinutes().toString().padStart(2,'0');
-   return `${hh}:${mm} - ${x.fare} (${x.profit})`;
- }).join("<br>");
+ let html = last5.map((x,i)=>{
+ let t=new Date(x.time);
+ let hh=t.getHours().toString().padStart(2,'0');
+ let mm=t.getMinutes().toString().padStart(2,'0');
+
+ return `
+<div style="
+padding:10px;
+margin-bottom:5px;
+background:${i===0?'#f2f2f7':'white'};
+border-radius:12px;
+box-shadow:0 2px 5px rgba(0,0,0,0.05);
+">
+🕒 ${hh}:${mm}  
+<span style="float:right;">💰${x.fare}</span><br>
+<span style="color:#888;">กำไร ${x.profit}</span>
+</div>
+`;
+}).join("");
+ 
 
  document.getElementById("history").innerHTML=html;
 }
