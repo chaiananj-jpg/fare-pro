@@ -157,8 +157,18 @@ ${status==="warn"?"⚠️ กำไรต่ำ":"✅ ปลอดภัย"}
 
 
 function saveTrip(){
- let r=calc();
- data.push(r);
+
+ let r = calc();
+
+ let d = +document.getElementById("d").innerText;
+
+ data.push({
+   fare: r.fare,
+   profit: r.profit,
+   d: d,
+   time: new Date().toISOString() // 👈 เพิ่มตรงนี้
+ });
+
  localStorage.setItem("fareData", JSON.stringify(data));
  updateDash();
 }
