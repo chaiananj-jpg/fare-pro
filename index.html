@@ -87,16 +87,17 @@ function tripType(t){
  document.getElementById("round").classList.remove("active");
  document.getElementById(t).classList.add("active");
 }
-
 function calc(){
- let p=+pEl.innerText;
- let d=+dEl.innerText;
- let f=+fEl.innerText;
+ let p = +document.getElementById("p").innerText;
+ let d = +document.getElementById("d").innerText;
+ let f = +document.getElementById("f").innerText;
+ let k = +document.getElementById("k").innerText;
+ let m = +document.getElementById("m").innerText;
 
  let dist=(2*d+p);
  if(trip==="round") dist*=1.5;
 
- let cost=dist*(f/18)+50;
+ let cost=(dist*(f/k)) + 50;
 
  let fare=100;
  if(p>2) fare+=10;
@@ -107,17 +108,26 @@ function calc(){
 
  let profit=fare-cost;
 
- let suggest = profit<25 ? fare+10 : fare;
+ let safeFare = Math.ceil(cost + m);
 
- res.innerHTML=`
+ let status="good";
+ if(profit<m) status="warn";
+
+ document.getElementById("res").innerHTML=`
 💰 ราคา: <b>${fare}</b> บาท<br>
 💸 ต้นทุน: ${cost.toFixed(0)} บาท<br>
 📈 กำไร: ${profit.toFixed(0)} บาท<br>
-🤖 แนะนำ: ${suggest} บาท
+<hr>
+🤖 ราคาแนะนำ: <b>${safeFare}</b> บาท<br>
+<span class="${status}">
+${status==="warn"?"⚠️ กำไรต่ำ":"✅ ปลอดภัย"}
+</span>
 `;
-
- return {fare, profit};
 }
+
+ 
+ 
+
 
 function saveTrip(){
  let r=calc();
