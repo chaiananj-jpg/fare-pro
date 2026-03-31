@@ -162,7 +162,23 @@ padding:3px;
 <div style="font-size:12px;color:#888;">Trips</div>
 <div style="font-size:20px;"><b id="trips">0</b></div>
 </div>
+<div>
+<div style="font-size:12px;color:#888;">Revenue</div>
+<div style="font-size:20px;"><b id="rev">0</b></div>
+</div>
 
+<div>
+<div style="font-size:12px;color:#888;">Profit</div>
+<div style="font-size:20px;"><b id="profit">0</b></div>
+</div>
+
+<div>
+<div style="font-size:12px;color:#888;">Avg</div>
+<div style="font-size:20px;"><b id="avg">0</b></div>
+</div>
+
+</div>
+</div>
 <div>
 <div style="font-size:12px;color:#888;">Profit</div>
 <div style="font-size:20px;"><b id="profit">0</b></div>
@@ -341,11 +357,7 @@ if(data.length === 0){
 </div>`;
  return;
 }
- if(data.length === 0){
-  document.getElementById("history").innerHTML = "📭 ยังไม่มีข้อมูล";
-  return;
- }
-
+ 
  let trips = data.length;
  let rev = data.reduce((a,b)=>a+b.fare,0);
  let profit = data.reduce((a,b)=>a+b.profit,0);
