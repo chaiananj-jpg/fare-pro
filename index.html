@@ -357,9 +357,12 @@ if(data.length === 0){
  let today = new Date().toDateString();
  let todayData = data.filter(x=> new Date(x.time).toDateString()===today);
 
- document.getElementById("t_trips").innerText=todayData.length;
- document.getElementById("t_rev").innerText=todayData.reduce((a,b)=>a+b.fare,0);
- document.getElementById("t_profit").innerText=todayData.reduce((a,b)=>a+b.profit,0);
+ let t_rev = todayData.reduce((a,b)=>a+b.fare,0);
+let t_profit = todayData.reduce((a,b)=>a+b.profit,0);
+
+document.getElementById("t_trips").innerText = todayData.length;
+document.getElementById("t_rev").innerText = t_rev || 0;
+document.getElementById("t_profit").innerText = t_profit || 0;
 
  let last5 = data.slice(-5).reverse();
 
