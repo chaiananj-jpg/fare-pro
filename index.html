@@ -15,6 +15,7 @@ button { width:60px; height:50px; font-size:20px; border:none; border-radius:12p
 .active { background:green; }
 .warn { color:red; font-weight:bold; }
 .good { color:green; font-weight:bold; }
+.mid { color:orange; font-weight:bold; }
 </style>
 </head>
 
@@ -62,17 +63,30 @@ button { width:60px; height:50px; font-size:20px; border:none; border-radius:12p
 
 <div class="box" id="res"></div>
 
-
 <button class="big" onclick="saveTrip()">💾 บันทึกงาน</button>
 
 <div class="box">
-📊 Trips: <span id="trips">0</span><br>
-💰 Revenue: <span id="rev">0</span><br>
-💸 Profit: <span id="profit">0</span><br>
-📈 Avg: <span id="avg">0</span>
+📊 ทั้งหมด<br>
+Trips: <span id="trips">0</span><br>
+Revenue: <span id="rev">0</span><br>
+Profit: <span id="profit">0</span><br>
+Avg: <span id="avg">0</span>
+</div>
+
+<div class="box">
+📅 วันนี้<br>
+Trips: <span id="t_trips">0</span><br>
+Revenue: <span id="t_rev">0</span><br>
+Profit: <span id="t_profit">0</span>
+</div>
+
+<div class="box">
+🕒 ล่าสุด
+<div id="history"></div>
 </div>
 
 <script>
+
 let trip="one";
 let data = JSON.parse(localStorage.getItem("fareData")) || [];
 
@@ -81,7 +95,7 @@ function chg(id,v){
  let n=parseFloat(el.innerText)+v;
  if(n<0)n=0;
  el.innerText=n.toFixed(1).replace('.0','');
- calc(); //
+ calc();
 }
 
 function tripType(t){
@@ -89,9 +103,11 @@ function tripType(t){
  document.getElementById("one").classList.remove("active");
  document.getElementById("round").classList.remove("active");
  document.getElementById(t).classList.add("active");
- calc(); //
+ calc();
 }
+
 function calc(){
+
  let p = +document.getElementById("p").innerText;
  let d = +document.getElementById("d").innerText;
  let f = +document.getElementById("f").innerText;
@@ -103,44 +119,46 @@ function calc(){
 
  let cost = (dist * (f/k)) + 50;
 
- // 🔥 dynamic profit
  let m;
-if(d <= 6) m = 35;
-else if(d <= 8) m = 30;
-else if(d <= 10) m = 25;
-else m = 20;
+ if(d <= 6) m = 35;
+ else if(d <= 8) m = 30;
+ else if(d <= 10) m = 25;
+ else m = 20;
 
- // 🔥 safe price
  let safeFare = Math.ceil(cost + m);
 
- // 🔥 market price
-let marketFare;
-if(d <= 6) marketFare = 95;
-else if(d <= 8) marketFare = 100;
-else if(d <= 10) marketFare = 110;
-else marketFare = 130;
+ let marketFare;
+ if(d <= 6) marketFare = 95;
+ else if(d <= 8) marketFare = 100;
+ else if(d <= 10) marketFare = 110;
+ else marketFare = 130;
 
- // 🔥 final price
  let fare = Math.max(safeFare, marketFare);
-
  if(trip==="round") fare += 40;
 
  let profit = fare - cost;
+
  let low = Math.floor(fare - 5);
  let mid = fare;
  let high = fare + 5;
- let status = profit < m ? "warn" : "good";
+
+ let status, label;
+ if(profit < m){
+   status="warn"; label="🔴 กำไรต่ำ";
+ }
+ else if(profit < m+10){
+   status="mid"; label="🟡 พอดี";
+ }
+ else{
+   status="good"; label="🟢 กำไรดี";
+ }
 
  document.getElementById("res").innerHTML = `
 💰 ราคา: <b>${fare}</b> บาท<br>
 💸 ต้นทุน: ${cost.toFixed(0)} บาท<br>
 📈 กำไร: ${profit.toFixed(0)} บาท<br>
-<hr>
-🤖 ราคา AI: <b>${fare}</b> บาท<br>
 
-<span class="${status}">
-${status==="warn"?"⚠️ กำไรต่ำ":"✅ ปลอดภัย"}
-</span>
+<span class="${status}">${label}</span>
 
 <hr>
 📞 ราคาแนะนำ<br>
@@ -149,45 +167,64 @@ ${status==="warn"?"⚠️ กำไรต่ำ":"✅ ปลอดภัย"}
 🟢 ${high} บาท
 `;
 
- return {fare, profit};
+ return {fare, profit, d};
 }
-
- 
- 
-
 
 function saveTrip(){
 
  let r = calc();
 
- let d = +document.getElementById("d").innerText;
-
  data.push({
    fare: r.fare,
    profit: r.profit,
-   d: d,
-   time: new Date().toISOString() // 👈 เพิ่มตรงนี้
+   d: r.d,
+   time: new Date().toISOString()
  });
 
  localStorage.setItem("fareData", JSON.stringify(data));
  updateDash();
+
+ alert("บันทึกแล้ว");
 }
 
 function updateDash(){
- let trips=data.length;
- let rev=data.reduce((a,b)=>a+b.fare,0);
- let profit=data.reduce((a,b)=>a+b.profit,0);
 
-document.getElementById("trips").innerText=trips;
-document.getElementById("rev").innerText=rev;
-document.getElementById("profit").innerText=profit;
-document.getElementById("avg").innerText=trips?Math.round(profit/trips):0;
- 
+ let trips = data.length;
+ let rev = data.reduce((a,b)=>a+b.fare,0);
+ let profit = data.reduce((a,b)=>a+b.profit,0);
+
+ document.getElementById("trips").innerText=trips;
+ document.getElementById("rev").innerText=rev;
+ document.getElementById("profit").innerText=profit;
+ document.getElementById("avg").innerText=trips?Math.round(profit/trips):0;
+
+ // วันนี้
+ let today = new Date().toDateString();
+ let todayData = data.filter(x=> new Date(x.time).toDateString()===today);
+
+ document.getElementById("t_trips").innerText=todayData.length;
+ document.getElementById("t_rev").innerText=todayData.reduce((a,b)=>a+b.fare,0);
+ document.getElementById("t_profit").innerText=todayData.reduce((a,b)=>a+b.profit,0);
+
+ // history
+ let last5 = data.slice(-5).reverse();
+
+ let html = last5.map(x=>{
+   let t=new Date(x.time);
+   let hh=t.getHours().toString().padStart(2,'0');
+   let mm=t.getMinutes().toString().padStart(2,'0');
+   return `${hh}:${mm} - ${x.fare} (${x.profit})`;
+ }).join("<br>");
+
+ document.getElementById("history").innerHTML=html;
 }
 
 updateDash();
- calc();
+calc();
+
 </script>
 
 </body>
 </html>
+
+
