@@ -1,16 +1,115 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Fare Pro</title>
+
+<style>
+body { font-family:-apple-system; margin:0; background:#f2f2f2; }
+.box { background:white; margin:10px; padding:15px; border-radius:15px; }
+.row { display:flex; justify-content:space-between; align-items:center; }
+.value { font-size:24px; font-weight:bold; }
+button { width:60px; height:50px; font-size:20px; border:none; border-radius:12px; background:#007bff; color:white; }
+.big { width:100%; height:55px; margin-top:10px; }
+.toggle { width:48%; }
+.active { background:green; }
+</style>
 </head>
 
-<body style="font-family:Arial; text-align:center; padding:50px;">
-<h2>🚗 Fare Pro พร้อมใช้งาน</h2>
+<body>
 
-<button onclick="alert('ใช้งานได้แล้ว!')" style="padding:15px; font-size:18px;">
-ทดสอบ
-</button>
+<h2 style="text-align:center;">🚗 Fare Pro</h2>
+
+<div class="box">
+<div class="row">
+<span>Pickup</span>
+<div>
+<button onclick="chg('p',-1)">-</button>
+<span class="value" id="p">2</span>
+<button onclick="chg('p',1)">+</button>
+</div>
+</div>
+</div>
+
+<div class="box">
+<div class="row">
+<span>Drop</span>
+<div>
+<button onclick="chg('d',-1)">-</button>
+<span class="value" id="d">6</span>
+<button onclick="chg('d',1)">+</button>
+</div>
+</div>
+</div>
+
+<div class="box">
+<div class="row">
+<span>Fuel</span>
+<div>
+<button onclick="chg('f',-1)">-</button>
+<span class="value" id="f">43</span>
+<button onclick="chg('f',1)">+</button>
+</div>
+</div>
+</div>
+
+<div class="box">
+<button class="toggle active" id="one" onclick="tripType('one')">One Way</button>
+<button class="toggle" id="round" onclick="tripType('round')">Round Trip</button>
+</div>
+
+<div class="box" id="res"></div>
+
+<button class="big" onclick="calc()">คำนวณ</button>
+
+<script>
+let trip="one";
+
+function chg(id,v){
+ let el=document.getElementById(id);
+ let n=+el.innerText+v;
+ if(n<0)n=0;
+ el.innerText=n;
+}
+
+function tripType(t){
+ trip=t;
+ document.getElementById("one").classList.remove("active");
+ document.getElementById("round").classList.remove("active");
+ document.getElementById(t).classList.add("active");
+}
+
+function calc(){
+ let p=+document.getElementById("p").innerText;
+ let d=+document.getElementById("d").innerText;
+ let f=+document.getElementById("f").innerText;
+
+ let dist=(2*d+p);
+ if(trip==="round") dist*=1.5;
+
+ let cost=dist*(f/18)+50;
+
+ let fare=100;
+ if(p>2) fare+=10;
+ if(d>6) fare+=10;
+ if(d>8) fare+=20;
+ if(d>10) fare+=40;
+ if(trip==="round") fare+=40;
+
+ let profit=fare-cost;
+
+ let status="✅ กำไรดี";
+ if(profit<25) status="⚠️ กำไรบาง";
+ if(profit<10) status="❌ ขาดทุน";
+
+ document.getElementById("res").innerHTML=`
+💰 ราคา: <b>${fare}</b> บาท<br>
+💸 ต้นทุน: ${cost.toFixed(0)} บาท<br>
+📈 กำไร: ${profit.toFixed(0)} บาท<br>
+${status}
+`;
+}
+</script>
 
 </body>
 </html>
