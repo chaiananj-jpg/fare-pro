@@ -95,58 +95,51 @@ function calc(){
  let p = +document.getElementById("p").innerText;
  let d = +document.getElementById("d").innerText;
  let f = +document.getElementById("f").innerText;
+
  let k = 18;
- let m = 25;
 
- let dist=(2*d+p);
- if(trip==="round") dist*=1.5;
+ let dist = (2*d + p);
+ if(trip==="round") dist *= 1.5;
 
- let cost=(dist*(f/k)) + 50;
+ let cost = (dist * (f/k)) + 50;
 
- // 🔥 AI Pricing
+ // 🔥 dynamic profit
+ let m;
+ if(d <= 6.5) m = 35;
+ else if(d <= 8) m = 30;
+ else if(d <= 10) m = 25;
+ else m = 20;
 
-// 1. dynamic profit
-let m;
-if(d <= 6.5) m = 35;
-else if(d <= 8) m = 30;
-else if(d <= 10) m = 25;
-else m = 20;
-
-// 2. safe price
-let safeFare = Math.ceil(cost + m);
-
-// 3. market price
-let marketFare;
-if(d <= 6.5) marketFare = 95;
-else if(d <= 8) marketFare = 100;
-else if(d <= 9.5) marketFare = 110;
-else marketFare = 120;
-
-// 4. final price
-let fare = Math.max(safeFare, marketFare);
-
-// round trip
-if(trip==="round") fare += 40;
-
-let profit = fare - cost;
-
- let profit=fare-cost;
-
+ // 🔥 safe price
  let safeFare = Math.ceil(cost + m);
 
- let status="good";
- if(profit<m) status="warn";
+ // 🔥 market price
+ let marketFare;
+ if(d <= 6.5) marketFare = 95;
+ else if(d <= 8) marketFare = 100;
+ else if(d <= 9.5) marketFare = 110;
+ else marketFare = 120;
 
- document.getElementById("res").innerHTML=`
+ // 🔥 final price
+ let fare = Math.max(safeFare, marketFare);
+
+ if(trip==="round") fare += 40;
+
+ let profit = fare - cost;
+
+ let status = profit < m ? "warn" : "good";
+
+ document.getElementById("res").innerHTML = `
 💰 ราคา: <b>${fare}</b> บาท<br>
 💸 ต้นทุน: ${cost.toFixed(0)} บาท<br>
 📈 กำไร: ${profit.toFixed(0)} บาท<br>
 <hr>
-🤖 ราคา AI: <b>${fare}</b> บาท
+🤖 ราคา AI: <b>${fare}</b> บาท<br>
 <span class="${status}">
 ${status==="warn"?"⚠️ กำไรต่ำ":"✅ ปลอดภัย"}
 </span>
 `;
+
  return {fare, profit};
 }
 
