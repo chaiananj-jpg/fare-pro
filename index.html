@@ -13,6 +13,8 @@ button { width:60px; height:50px; font-size:20px; border:none; border-radius:12p
 .big { width:100%; height:55px; margin-top:10px; }
 .toggle { width:48%; }
 .active { background:green; }
+.warn { color:red; font-weight:bold; }
+.good { color:green; font-weight:bold; }
 </style>
 </head>
 
@@ -60,7 +62,7 @@ button { width:60px; height:50px; font-size:20px; border:none; border-radius:12p
 
 <div class="box" id="res"></div>
 
-<button class="big" onclick="calc()">คำนวณ</button>
+
 <button class="big" onclick="saveTrip()">💾 บันทึกงาน</button>
 
 <div class="box">
@@ -76,9 +78,10 @@ let data = JSON.parse(localStorage.getItem("fareData")) || [];
 
 function chg(id,v){
  let el=document.getElementById(id);
- let n=+el.innerText+v;
+ let n=parseFloat(el.innerText)+v;
  if(n<0)n=0;
- el.innerText=n;
+ el.innerText=n.toFixed(1).replace('.0','');
+ calc(); //
 }
 
 function tripType(t){
@@ -86,13 +89,14 @@ function tripType(t){
  document.getElementById("one").classList.remove("active");
  document.getElementById("round").classList.remove("active");
  document.getElementById(t).classList.add("active");
+ calc(); //
 }
 function calc(){
  let p = +document.getElementById("p").innerText;
  let d = +document.getElementById("d").innerText;
  let f = +document.getElementById("f").innerText;
- let k = +document.getElementById("k").innerText;
- let m = +document.getElementById("m").innerText;
+ let k = 18;
+ let m = 25;
 
  let dist=(2*d+p);
  if(trip==="round") dist*=1.5;
@@ -123,6 +127,7 @@ function calc(){
 ${status==="warn"?"⚠️ กำไรต่ำ":"✅ ปลอดภัย"}
 </span>
 `;
+ return {fare, profit};
 }
 
  
@@ -141,13 +146,15 @@ function updateDash(){
  let rev=data.reduce((a,b)=>a+b.fare,0);
  let profit=data.reduce((a,b)=>a+b.profit,0);
 
- tripsEl.innerText=trips;
- revEl.innerText=rev;
- profitEl.innerText=profit;
- avg.innerText=trips?Math.round(profit/trips):0;
+document.getElementById("trips").innerText=trips;
+document.getElementById("rev").innerText=rev;
+document.getElementById("profit").innerText=profit;
+document.getElementById("avg").innerText=trips?Math.round(profit/trips):0;
+ 
 }
 
 updateDash();
+ calc();
 </script>
 
 </body>
