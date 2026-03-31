@@ -126,7 +126,9 @@ else marketFare = 130;
  if(trip==="round") fare += 40;
 
  let profit = fare - cost;
-
+ let low = Math.floor(fare - 5);
+ let mid = fare;
+ let high = fare + 5;
  let status = profit < m ? "warn" : "good";
 
  document.getElementById("res").innerHTML = `
@@ -135,9 +137,16 @@ else marketFare = 130;
 📈 กำไร: ${profit.toFixed(0)} บาท<br>
 <hr>
 🤖 ราคา AI: <b>${fare}</b> บาท<br>
+
 <span class="${status}">
 ${status==="warn"?"⚠️ กำไรต่ำ":"✅ ปลอดภัย"}
 </span>
+
+<hr>
+📞 ราคาแนะนำ<br>
+🔴 ${low} บาท<br>
+🟡 ${mid} บาท<br>
+🟢 ${high} บาท
 `;
 
  return {fare, profit};
