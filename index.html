@@ -2,57 +2,77 @@
 <html lang="th">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fare Pro V6</title>
+<title>Fare Pro V7</title>
 
 <style>
 body {
- font-family:-apple-system, sans-serif;
+ font-family:-apple-system, BlinkMacSystemFont, sans-serif;
  margin:0;
  background:#f2f2f7;
 }
+
+.header {
+ position:sticky;
+ top:0;
+ background:rgba(255,255,255,0.8);
+ backdrop-filter:blur(10px);
+ padding:12px;
+ text-align:center;
+ font-weight:600;
+ border-bottom:1px solid #eee;
+}
+
 .box {
  background:white;
  margin:12px;
  padding:16px;
- border-radius:20px;
+ border-radius:16px;
+ box-shadow:0 2px 10px rgba(0,0,0,0.05);
 }
+
 .row {
  display:flex;
  justify-content:space-between;
  align-items:center;
 }
-.value { font-size:26px; font-weight:bold; }
+
+.value {
+ font-size:28px;
+ font-weight:600;
+}
 
 button {
  border:none;
  border-radius:12px;
  background:#007aff;
  color:white;
+ font-size:18px;
  padding:8px 12px;
 }
 
 .big {
  width:100%;
- height:55px;
+ height:50px;
  margin-top:10px;
  font-size:20px;
- font-weight:600;
 }
 
 .segWrap {
  display:flex;
  background:#e5e5ea;
- border-radius:10px;
+ border-radius:12px;
  padding:3px;
+ margin:12px;
 }
+
 .seg {
  flex:1;
  background:transparent;
- color:black;
  font-size:16px;
- font-weight:600;
- padding:10px 0;
+ padding:8px;
+ border-radius:10px;
 }
+
 .seg.active {
  background:white;
 }
@@ -69,7 +89,7 @@ button {
 
 <body>
 
-<h2 style="text-align:center;">🚕 Fare Pro V6</h2>
+<div class="header">🚕 Fare Pro V7</div>
 
 <!-- INPUT -->
 <div class="box">
@@ -77,7 +97,7 @@ button {
 Pickup
 <div>
 <button onclick="chg('p',-1)">-</button>
-<span id="p" class="value">2</span>
+<span class="value" id="p">2</span>
 <button onclick="chg('p',1)">+</button>
 </div>
 </div>
@@ -88,7 +108,7 @@ Pickup
 Drop
 <div>
 <button onclick="chg('d',-1)">-</button>
-<span id="d" class="value">6</span>
+<span class="value" id="d">6</span>
 <button onclick="chg('d',1)">+</button>
 </div>
 </div>
@@ -99,7 +119,7 @@ Drop
 Fuel
 <div>
 <button onclick="chg('f',-1)">-</button>
-<span id="f" class="value">43</span>
+<span class="value" id="f">43</span>
 <button onclick="chg('f',1)">+</button>
 </div>
 </div>
@@ -108,29 +128,36 @@ Fuel
 <!-- RESULT -->
 <div class="box" id="res"></div>
 
+<!-- ACTUAL -->
+<div class="box">
+Actual Fare
+<input id="actualFare" type="number" style="width:100%;padding:10px;font-size:18px;">
+</div>
+
+<!-- ACTION -->
 <button class="big" onclick="saveTrip()">💾 Save</button>
+<button class="big" style="background:#ff3b30;" onclick="clearData()">🗑 Clear</button>
 
 <!-- FILTER -->
-<div class="box">
 <div class="segWrap">
-<button class="seg active" onclick="setFilter('day')" id="f_day">Day</button>
-<button class="seg" onclick="setFilter('week')" id="f_week">Week</button>
-<button class="seg" onclick="setFilter('month')" id="f_month">Month</button>
-</div>
+<button class="seg active" id="f_day" onclick="setFilter('day')">Day</button>
+<button class="seg" id="f_week" onclick="setFilter('week')">Week</button>
+<button class="seg" id="f_month" onclick="setFilter('month')">Month</button>
 </div>
 
 <!-- DASHBOARD -->
 <div class="box">
 <div style="font-size:16px;">
-Trips: <span id="trips" style="font-size:20px;font-weight:600;">0</span><br>
-Revenue: <span id="rev" style="font-size:20px;font-weight:600;">0</span><br>
-Profit: <span id="profit" style="font-size:20px;font-weight:600;">0</span><br>
-Avg: <span id="avg" style="font-size:20px;font-weight:600;">0</span>
+Trips: <b id="trips">0</b><br>
+Revenue: <b id="rev">0</b><br>
+Profit: <b id="profit">0</b><br>
+Avg: <b id="avg">0</b>
+</div>
 </div>
 
 <!-- HISTORY -->
 <div class="box">
-<div id="history"></div>
+<div id="history">📭 No data</div>
 </div>
 
 <script>
@@ -139,40 +166,48 @@ let data = JSON.parse(localStorage.getItem("fareData")) || [];
 let filter = "day";
 
 function chg(id,v){
- let el = document.getElementById(id);
- let n = parseFloat(el.innerText) + v;
+ let el=document.getElementById(id);
+ let n=parseFloat(el.innerText)+v;
  if(n<0)n=0;
- el.innerText = n;
+ el.innerText=n;
  calc();
 }
 
 function calc(){
 
- let p = +pEl().innerText;
- let d = +dEl().innerText;
- let f = +fEl().innerText;
+ let p = +document.getElementById("p").innerText;
+ let d = +document.getElementById("d").innerText;
+ let f = +document.getElementById("f").innerText;
 
- let cost = (d+p)*(f/18)+50;
- let fare = Math.ceil(cost + 30);
+ let dist = d + p + (d * 0.25);
+ let cost = (dist * (f/18)) + 50;
+
+ let fare = Math.max(Math.ceil(cost+30),100);
  let profit = fare - cost;
 
- document.getElementById("res").innerHTML =
- `ราคา ${fare} บาท<br>กำไร ${profit.toFixed(0)}`;
+ let low = fare-5, mid=fare, high=fare+5;
 
- return {fare, profit, d};
+ document.getElementById("res").innerHTML = `
+💰 <b style="font-size:28px;">${fare}</b><br>
+💸 Cost ${cost.toFixed(0)}<br>
+📈 Profit ${profit.toFixed(0)}<br>
+<hr>
+🤖 AI Suggested<br>
+🔴 ${low} | 🟡 ${mid} | 🟢 ${high}
+`;
+
+ document.getElementById("actualFare").value = fare;
+
+ return {fare, profit, cost};
 }
 
 function saveTrip(){
-
  let r = calc();
-
- let realFare = prompt("ค่าโดยสารจริง", r.fare);
- if(!realFare) return;
+ let actual = Number(document.getElementById("actualFare").value) || r.fare;
 
  data.push({
-   fare: +realFare,
-   profit: realFare - (r.fare - r.profit),
-   d: r.d,
+   fare: actual,
+   profit: actual - r.cost,
    time: new Date().toISOString()
  });
 
@@ -181,92 +216,57 @@ function saveTrip(){
 }
 
 function setFilter(f){
- filter=f;
-
- document.getElementById("f_day").classList.remove("active");
- document.getElementById("f_week").classList.remove("active");
- document.getElementById("f_month").classList.remove("active");
-
+ filter = f;
+ document.querySelectorAll(".seg").forEach(x=>x.classList.remove("active"));
  document.getElementById("f_"+f).classList.add("active");
-
  updateDash();
 }
 
-function filterData(){
-
+function getFiltered(){
  let now = new Date();
-
  return data.filter(x=>{
-   let t = new Date(x.time);
-
-   if(filter==="day"){
-     return t.toDateString() === now.toDateString();
-   }
-
-   if(filter==="week"){
-     let diff = (now - t)/(1000*60*60*24);
-     return diff <= 7;
-   }
-
-   if(filter==="month"){
-     return t.getMonth() === now.getMonth();
-   }
-
+  let t=new Date(x.time);
+  if(filter==="day") return t.toDateString()===now.toDateString();
+  if(filter==="week") return (now-t)/(1000*60*60*24)<=7;
+  if(filter==="month") return t.getMonth()===now.getMonth();
  });
 }
 
 function updateDash(){
 
- let d = filterData();
+ let list = getFiltered();
 
- if(d.length===0){
-  history.innerHTML = "📭 ไม่มีข้อมูล";
-  trips.innerText=0;
-  rev.innerText=0;
-  profit.innerText=0;
-  avg.innerText=0;
+ let trips = list.length;
+ let rev = list.reduce((a,b)=>a+b.fare,0);
+ let profit = list.reduce((a,b)=>a+b.profit,0);
+
+ document.getElementById("trips").innerText=trips;
+ document.getElementById("rev").innerText=rev;
+ document.getElementById("profit").innerText=profit;
+ document.getElementById("avg").innerText=trips?Math.round(profit/trips):0;
+
+ if(list.length===0){
+  document.getElementById("history").innerHTML="📭 No data";
   return;
  }
 
- let tripsN = d.length;
- let revN = d.reduce((a,b)=>a+b.fare,0);
- let profitN = d.reduce((a,b)=>a+b.profit,0);
-
- trips.innerText = tripsN;
- rev.innerText = revN;
- profit.innerText = profitN;
- avg.innerText = Math.round(profitN/tripsN);
-
- history.innerHTML = d.slice(-10).reverse().map(x=>{
-
-   let t = new Date(x.time);
-
-   return `
-<div class="card" onclick="showDetail('${x.time}')">
+ document.getElementById("history").innerHTML = list.slice(-5).reverse().map(x=>{
+  let t=new Date(x.time);
+  return `
+<div class="card" onclick="alert('Fare: '+x.fare+'\nProfit: '+x.profit)">
 🕒 ${t.getHours()}:${t.getMinutes()}  
-💰 ${x.fare}<br>
-กำไร ${x.profit}
-</div>
-`;
-
+<span style="float:right;">${x.fare}</span>
+</div>`;
  }).join("");
 }
 
-function showDetail(time){
-
- let x = data.find(i=>i.time===time);
-
- alert(
-`เวลา: ${new Date(x.time).toLocaleString()}
-ระยะ: ${x.d} km
-รายรับ: ${x.fare}
-กำไร: ${x.profit}`
-);
+function clearData(){
+ if(confirm("Clear all data?")){
+  localStorage.clear();
+  data=[];
+  updateDash();
+ }
 }
-
-function pEl(){ return document.getElementById("p"); }
-function dEl(){ return document.getElementById("d"); }
-function fEl(){ return document.getElementById("f"); }
 
 updateDash();
 calc();
@@ -275,4 +275,3 @@ calc();
 
 </body>
 </html>
-
