@@ -2,396 +2,190 @@
 <html lang="th">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fare Pro+</title>
+<title>Fare Pro V5 Smart</title>
 
 <style>
-body {
- font-family:-apple-system, BlinkMacSystemFont, sans-serif;
- margin:0;
- background:#f2f2f7;
-}
-
-h2 {
- text-align:center;
- margin:15px 0;
- font-weight:600;
-}
-
-.box {
- background:rgba(255,255,255,0.7);
- backdrop-filter: blur(10px);
- margin:12px;
- padding:16px;
- border-radius:20px;
- box-shadow:0 4px 20px rgba(0,0,0,0.05);
-}
-
-.row {
- display:flex;
- justify-content:space-between;
- align-items:center;
-}
-
-.value {
- font-size:28px;
- font-weight:600;
-}
-
-button {
- border:none;
- border-radius:14px;
- background:#007aff;
- color:white;
- font-size:18px;
-}
-
-button:active {
- transform:scale(0.96);
- opacity:0.9;
-}
-
-.big {
- width:100%;
- height:56px;
- margin-top:10px;
- font-size:18px;
- font-weight:600;
-}
-
-.toggle {
- width:48%;
- height:50px;
-}
-
-.active {
- background:#34c759;
-}
-
-.warn { color:#ff3b30; font-weight:600; }
-.mid { color:#ff9500; font-weight:600; }
-.good { color:#34c759; font-weight:600; }
-.seg {
- background:transparent;
- color:#000;
- border-radius:10px;
- height:40px;
-}
-
-.seg.active {
- background:white;
- box-shadow:0 2px 5px rgba(0,0,0,0.1);
-}
+body { font-family:-apple-system; margin:0; background:#f2f2f7; }
+.header { text-align:center; padding:12px; font-weight:600; }
+.box { background:white; margin:10px; padding:14px; border-radius:14px; }
+select, input { width:100%; padding:10px; margin-top:5px; border-radius:8px; border:1px solid #ddd; }
+button { background:#007aff; color:white; border:none; border-radius:8px; padding:8px; margin:3px; }
+.big { width:100%; height:44px; }
+.smart-btn { background:#34c759; }
+.item { padding:8px; margin-bottom:6px; background:#f9f9f9; border-radius:8px; }
+.small { font-size:12px; color:#666; }
 </style>
 </head>
 
 <body>
-<div style="
-position:sticky;
-top:0;
-background:rgba(255,255,255,0.8);
-backdrop-filter:blur(10px);
-padding:10px;
-text-align:center;
-font-weight:600;
-border-bottom:1px solid #eee;
-z-index:10;
-">
-🚕 Fare Pro
-</div>
-<h2>🚕 Fare Pro</h2>
 
-<!-- INPUT -->
+<div class="header">🚕 Fare Pro V5 Smart</div>
+
 <div class="box">
-<div class="row">
-<span>📍Pickup</span>
-<div>
-<button onclick="chg('p',-1)">-</button>
-<span class="value" id="p">2</span>
-<button onclick="chg('p',1)">+</button>
-</div>
-</div>
+
+<label>Preset Route</label>
+<select id="route">
+<option value="2">หน้ามอ → หอใน (2 km)</option>
+<option value="6">หน้ามอ → บขส (6 km)</option>
+<option value="8">หน้ามอ → แยกเกษตร (8 km)</option>
+<option value="10">หน้ามอ → ตัวเมือง (10 km)</option>
+</select>
+
+<label>Manual km</label>
+<input id="manualKm" placeholder="เช่น 7.5">
+
+<label>Fuel</label>
+<input id="fuel" value="43">
+
+<button class="big" onclick="calc()">คำนวณ</button>
+
 </div>
 
 <div class="box">
-<div class="row">
-<span>🏁Drop</span>
-<div>
-<button onclick="chg('d',-1)">-</button>
-<span class="value" id="d">6</span>
-<button onclick="chg('d',1)">+</button>
-</div>
-</div>
+🧠 Smart Route (ใช้บ่อย)
+<div id="smartRoutes"></div>
 </div>
 
-<div class="box">
-<div class="row">
-<span>⛽Fuel</span>
-<div>
-<button onclick="chg('f',-1)">-</button>
-<span class="value" id="f">43</span>
-<button onclick="chg('f',1)">+</button>
-</div>
-</div>
-</div>
+<div class="box" id="res">📍 รอคำนวณ...</div>
 
-<!-- TRIP TYPE -->
-<div class="box">
-<div style="
-display:flex;
-background:#e5e5ea;
-border-radius:12px;
-padding:3px;
-">
-<button id="one" onclick="tripType('one')" class="seg active">เที่ยวเดียว</button>
-<button id="round" onclick="tripType('round')" class="seg">ไป-กลับ</button>
-</div>
-</div>
-
-<!-- RESULT -->
-<div class="box" id="res"></div>
-
-<!-- ACTION -->
 <button class="big" onclick="saveTrip()">💾 บันทึก</button>
-<button class="big" style="background:#ff3b30;" onclick="clearData()">🗑 ล้าง</button>
 
-<!-- DASHBOARD -->
 <div class="box">
-<div style="display:flex; justify-content:space-between;">
-
-<div>
-<div style="font-size:12px;color:#888;">Trips</div>
-<div style="font-size:20px;"><b id="trips">0</b></div>
-</div>
-<div>
-<div style="font-size:12px;color:#888;">Revenue</div>
-<div style="font-size:20px;"><b id="rev">0</b></div>
-</div>
-
-<div>
-<div style="font-size:12px;color:#888;">Profit</div>
-<div style="font-size:20px;"><b id="profit">0</b></div>
-</div>
-
-<div>
-<div style="font-size:12px;color:#888;">Avg</div>
-<div style="font-size:20px;"><b id="avg">0</b></div>
-</div>
-
-</div>
+📊 Trips: <b id="trips">0</b><br>
+💰 Revenue: <b id="rev">0</b><br>
+📈 Profit: <b id="profit">0</b><br>
+⚖️ Avg: <b id="avg">0</b>
 </div>
 
 <div class="box">
-📅 วันนี้<br>
-Trips: <span id="t_trips">-</span><br>
-Revenue: <span id="t_rev">-</span><br>
-Profit: <span id="t_profit">-</span>
-</div>
-
-<div class="box">
-🕒 ล่าสุด
-<div id="history" style="color:#888;text-align:center;">
-📭 ยังไม่มีข้อมูล
-</div>
+🕒 History
+<div id="history">📭 ไม่มีข้อมูล</div>
 </div>
 
 <script>
 
-let trip="one";
 let data = JSON.parse(localStorage.getItem("fareData")) || [];
+let lastCalc = null;
 
-function chg(id,v){
- let el=document.getElementById(id);
- let n=parseFloat(el.innerText)+v;
- if(n<0)n=0;
- el.innerText=n.toFixed(1).replace('.0','');
- calc();
-}
-
-function tripType(t){
- trip=t;
- document.getElementById("one").classList.remove("active");
- document.getElementById("round").classList.remove("active");
- document.getElementById(t).classList.add("active");
- calc();
-}
-
+// ================= CALC =================
 function calc(){
 
- let p = +document.getElementById("p").innerText;
- let d = +document.getElementById("d").innerText;
- let f = +document.getElementById("f").innerText;
+ let manual = document.getElementById("manualKm").value;
+ let km = manual ? Number(manual) : Number(document.getElementById("route").value);
+ let fuel = Number(document.getElementById("fuel").value);
 
  let k = 18;
-
- let dist = d + p + (d * 0.25);
- if(trip==="round") dist *= 1.5;
-
- let cost = (dist * (f/k)) + 50;
+ let cost = (km * (fuel/k)) + 50;
 
  let m;
- if(d <= 6) m = 35;
- else if(d <= 8) m = 30;
- else if(d <= 10) m = 25;
+ if(km <= 6) m = 35;
+ else if(km <= 8) m = 30;
+ else if(km <= 10) m = 25;
  else m = 20;
 
- let safeFare = Math.ceil(cost + m);
-
- let marketFare;
- if(d <= 6) marketFare = 95;
- else if(d <= 8) marketFare = 100;
- else if(d <= 10) marketFare = 110;
- else marketFare = 130;
-
- let fare = Math.max(safeFare, marketFare);
- if(trip==="round") fare += 40;
-
+ let fare = Math.ceil(cost + m);
  let profit = fare - cost;
 
- let low = Math.floor(fare - 5);
- let mid = fare;
- let high = fare + 5;
+ lastCalc = {km, cost, fare, profit};
 
- let status, label;
- if(profit < m){
-   status="warn"; label="🔴 เสี่ยงขาดทุน";
- } else if(profit < m+10){
-   status="mid"; label="🟡 พอดี";
- } else{
-   status="good"; label="🟢 กำไรดี";
- }
-
- let percent = Math.min(100, Math.max(0, (profit / (m+20)) * 100));
-
-document.getElementById("res").innerHTML = `
-<div style="font-size:18px;">
-💰 <b style="font-size:28px;">${fare}</b> บาท
-</div>
-
-<div style="margin-top:8px;">
-💸 ต้นทุน ${cost.toFixed(0)} บาท<br>
-📈 กำไร ${profit.toFixed(0)} บาท
-</div>
-
-<div class="${status}" style="margin-top:8px;">
-${label}
-</div>
-
-<div style="margin-top:12px;">
-<div style="height:8px;background:#e5e5ea;border-radius:10px;">
-<div style="width:${percent}%;height:8px;background:${status==='good'?'#34c759':status==='mid'?'#ff9500':'#ff3b30'};border-radius:10px;"></div>
-</div>
-</div>
-
-<hr style="margin:12px 0;">
-
-<div style="font-size:14px;color:#666;">
-📞 แนะนำราคา
-</div>
-
-<div style="margin-top:5px;">
-🔴 ${low} | 🟡 ${mid} | 🟢 ${high}
-</div>
+ document.getElementById("res").innerHTML = `
+📏 ${km} km<br>
+💰 ${fare} บาท<br>
+📈 กำไร ${profit.toFixed(0)}
 `;
- return {fare, profit, d};
 }
+
+// ================= SAVE =================
 function saveTrip(){
 
- let r = calc();
-
- data.push({
-   fare: r.fare,
-   profit: r.profit,
-   d: r.d,
-   time: new Date().toISOString()
- });
-
- localStorage.setItem("fareData", JSON.stringify(data));
- updateDash();
-
- alert("บันทึกแล้ว");
-}
-function quickSave(price){
-
- let p = calc();
-
- data.push({
-   fare: price,
-   profit: price - (p.fare - p.profit), // recalculated
-   d: p.d,
-   time: new Date().toISOString()
- });
-
- localStorage.setItem("fareData", JSON.stringify(data));
- updateDash();
-
- navigator.vibrate?.(50); // Android
-
- alert("บันทึก "+price+" บาท");
-}
-function clearData(){
- if(confirm("ลบข้อมูลทั้งหมด?")){
-   localStorage.clear();
-   data = [];
-   updateDash();
+ if(!lastCalc){
+  alert("ยังไม่คำนวณ");
+  return;
  }
+
+ let real = prompt("ราคาจริง:", lastCalc.fare);
+ if(real===null) return;
+
+ real = Number(real);
+
+ data.push({
+  ...lastCalc,
+  fareReal: real,
+  profit: real - lastCalc.cost,
+  time: new Date().toISOString()
+ });
+
+ localStorage.setItem("fareData", JSON.stringify(data));
+
+ updateDash();
 }
 
-function updateDash(){
-if(data.length === 0){
- document.getElementById("history").innerHTML = `
-<div style="text-align:center;color:#999;padding:10px;">
-📭 ยังไม่มีงาน<br>
-<small>เริ่มบันทึกเพื่อดูรายงาน</small>
-</div>`;
+// ================= SMART ROUTE =================
+function renderSmart(){
+
+ let freq = {};
+
+ data.forEach(x=>{
+  let key = Math.round(x.km);
+  freq[key] = (freq[key]||0)+1;
+ });
+
+ let top = Object.entries(freq)
+  .sort((a,b)=>b[1]-a[1])
+  .slice(0,5);
+
+ document.getElementById("smartRoutes").innerHTML =
+ top.map(x=>`
+<button class="smart-btn" onclick="useSmart(${x[0]})">
+${x[0]} km (${x[1]})
+</button>
+`).join("");
 }
- 
- let trips = data.length;
- let rev = data.reduce((a,b)=>a+b.fare,0);
- let profit = data.reduce((a,b)=>a+b.profit,0);
+
+function useSmart(km){
+ document.getElementById("manualKm").value = km;
+ calc();
+}
+
+// ================= DASH =================
+function updateDash(){
+
+ let trips=data.length;
+ let rev=data.reduce((a,b)=>a+b.fareReal,0);
+ let profit=data.reduce((a,b)=>a+b.profit,0);
 
  document.getElementById("trips").innerText=trips;
  document.getElementById("rev").innerText=rev;
  document.getElementById("profit").innerText=profit;
- document.getElementById("avg").innerText=Math.round(profit/trips);
+ document.getElementById("avg").innerText=trips?Math.round(profit/trips):0;
 
- let today = new Date().toDateString();
- let todayData = data.filter(x=> new Date(x.time).toDateString()===today);
+ renderHistory();
+ renderSmart();
+}
 
- let t_rev = todayData.reduce((a,b)=>a+b.fare,0);
-let t_profit = todayData.reduce((a,b)=>a+b.profit,0);
+// ================= HISTORY =================
+function renderHistory(){
 
-document.getElementById("t_trips").innerText = todayData.length;
-document.getElementById("t_rev").innerText = t_rev || 0;
-document.getElementById("t_profit").innerText = t_profit || 0;
+ if(data.length===0){
+  document.getElementById("history").innerHTML="📭 ไม่มีข้อมูล";
+  return;
+ }
 
- let last5 = data.slice(-5).reverse();
+ document.getElementById("history").innerHTML =
+ data.slice(-5).reverse().map(x=>{
+  let t=new Date(x.time);
+  let hh=String(t.getHours()).padStart(2,'0');
+  let mm=String(t.getMinutes()).padStart(2,'0');
 
- let html = last5.map((x,i)=>{
- let t=new Date(x.time);
- let hh=t.getHours().toString().padStart(2,'0');
- let mm=t.getMinutes().toString().padStart(2,'0');
-
- return `
-<div style="
-padding:10px;
-margin-bottom:5px;
-background:${i===0?'#f2f2f7':'white'};
-border-radius:12px;
-box-shadow:0 2px 5px rgba(0,0,0,0.05);
-">
-🕒 ${hh}:${mm}  
-<span style="float:right;">💰${x.fare}</span><br>
-<span style="color:#888;">กำไร ${x.profit}</span>
-</div>
-`;
-}).join("");
- 
-
- document.getElementById("history").innerHTML=html;
+  return `
+<div class="item">
+🕒 ${hh}:${mm} 💰${x.fareReal}
+<div class="small">${x.km} km | กำไร ${x.profit.toFixed(0)}</div>
+</div>`;
+ }).join("");
 }
 
 updateDash();
-calc();
 
 </script>
 
