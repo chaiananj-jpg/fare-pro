@@ -2,192 +2,270 @@
 <html lang="th">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fare Pro V5 Smart</title>
+<title>Fare Pro V6</title>
 
 <style>
-body { font-family:-apple-system; margin:0; background:#f2f2f7; }
-.header { text-align:center; padding:12px; font-weight:600; }
-.box { background:white; margin:10px; padding:14px; border-radius:14px; }
-select, input { width:100%; padding:10px; margin-top:5px; border-radius:8px; border:1px solid #ddd; }
-button { background:#007aff; color:white; border:none; border-radius:8px; padding:8px; margin:3px; }
-.big { width:100%; height:44px; }
-.smart-btn { background:#34c759; }
-.item { padding:8px; margin-bottom:6px; background:#f9f9f9; border-radius:8px; }
-.small { font-size:12px; color:#666; }
+body {
+ font-family:-apple-system, sans-serif;
+ margin:0;
+ background:#f2f2f7;
+}
+.box {
+ background:white;
+ margin:12px;
+ padding:16px;
+ border-radius:20px;
+}
+.row {
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+}
+.value { font-size:26px; font-weight:bold; }
+
+button {
+ border:none;
+ border-radius:12px;
+ background:#007aff;
+ color:white;
+ padding:8px 12px;
+}
+
+.big {
+ width:100%;
+ height:50px;
+ margin-top:10px;
+}
+
+.segWrap {
+ display:flex;
+ background:#e5e5ea;
+ border-radius:10px;
+ padding:3px;
+}
+.seg {
+ flex:1;
+ background:transparent;
+ color:black;
+}
+.seg.active {
+ background:white;
+}
+
+.card {
+ padding:10px;
+ border-radius:12px;
+ background:#f9f9f9;
+ margin-bottom:6px;
+}
 </style>
 </head>
 
 <body>
 
-<div class="header">🚕 Fare Pro V5 Smart</div>
+<h2 style="text-align:center;">🚕 Fare Pro V6</h2>
 
+<!-- INPUT -->
 <div class="box">
-
-<label>Preset Route</label>
-<select id="route">
-<option value="2">หน้ามอ → หอใน (2 km)</option>
-<option value="6">หน้ามอ → บขส (6 km)</option>
-<option value="8">หน้ามอ → แยกเกษตร (8 km)</option>
-<option value="10">หน้ามอ → ตัวเมือง (10 km)</option>
-</select>
-
-<label>Manual km</label>
-<input id="manualKm" placeholder="เช่น 7.5">
-
-<label>Fuel</label>
-<input id="fuel" value="43">
-
-<button class="big" onclick="calc()">คำนวณ</button>
-
+<div class="row">
+Pickup
+<div>
+<button onclick="chg('p',-1)">-</button>
+<span id="p" class="value">2</span>
+<button onclick="chg('p',1)">+</button>
+</div>
+</div>
 </div>
 
 <div class="box">
-🧠 Smart Route (ใช้บ่อย)
-<div id="smartRoutes"></div>
+<div class="row">
+Drop
+<div>
+<button onclick="chg('d',-1)">-</button>
+<span id="d" class="value">6</span>
+<button onclick="chg('d',1)">+</button>
+</div>
+</div>
 </div>
 
-<div class="box" id="res">📍 รอคำนวณ...</div>
+<div class="box">
+<div class="row">
+Fuel
+<div>
+<button onclick="chg('f',-1)">-</button>
+<span id="f" class="value">43</span>
+<button onclick="chg('f',1)">+</button>
+</div>
+</div>
+</div>
+
+<!-- RESULT -->
+<div class="box" id="res"></div>
 
 <button class="big" onclick="saveTrip()">💾 บันทึก</button>
 
+<!-- FILTER -->
 <div class="box">
-📊 Trips: <b id="trips">0</b><br>
-💰 Revenue: <b id="rev">0</b><br>
-📈 Profit: <b id="profit">0</b><br>
-⚖️ Avg: <b id="avg">0</b>
+<div class="segWrap">
+<button class="seg active" onclick="setFilter('day')" id="f_day">วัน</button>
+<button class="seg" onclick="setFilter('week')" id="f_week">สัปดาห์</button>
+<button class="seg" onclick="setFilter('month')" id="f_month">เดือน</button>
+</div>
 </div>
 
+<!-- DASHBOARD -->
 <div class="box">
-🕒 History
-<div id="history">📭 ไม่มีข้อมูล</div>
+Trips: <span id="trips">0</span><br>
+Revenue: <span id="rev">0</span><br>
+Profit: <span id="profit">0</span><br>
+Avg: <span id="avg">0</span>
+</div>
+
+<!-- HISTORY -->
+<div class="box">
+<div id="history"></div>
 </div>
 
 <script>
 
 let data = JSON.parse(localStorage.getItem("fareData")) || [];
-let lastCalc = null;
+let filter = "day";
 
-// ================= CALC =================
-function calc(){
-
- let manual = document.getElementById("manualKm").value;
- let km = manual ? Number(manual) : Number(document.getElementById("route").value);
- let fuel = Number(document.getElementById("fuel").value);
-
- let k = 18;
- let cost = (km * (fuel/k)) + 50;
-
- let m;
- if(km <= 6) m = 35;
- else if(km <= 8) m = 30;
- else if(km <= 10) m = 25;
- else m = 20;
-
- let fare = Math.ceil(cost + m);
- let profit = fare - cost;
-
- lastCalc = {km, cost, fare, profit};
-
- document.getElementById("res").innerHTML = `
-📏 ${km} km<br>
-💰 ${fare} บาท<br>
-📈 กำไร ${profit.toFixed(0)}
-`;
+function chg(id,v){
+ let el = document.getElementById(id);
+ let n = parseFloat(el.innerText) + v;
+ if(n<0)n=0;
+ el.innerText = n;
+ calc();
 }
 
-// ================= SAVE =================
+function calc(){
+
+ let p = +pEl().innerText;
+ let d = +dEl().innerText;
+ let f = +fEl().innerText;
+
+ let cost = (d+p)*(f/18)+50;
+ let fare = Math.ceil(cost + 30);
+ let profit = fare - cost;
+
+ document.getElementById("res").innerHTML =
+ `ราคา ${fare} บาท<br>กำไร ${profit.toFixed(0)}`;
+
+ return {fare, profit, d};
+}
+
 function saveTrip(){
 
- if(!lastCalc){
-  alert("ยังไม่คำนวณ");
-  return;
- }
+ let r = calc();
 
- let real = prompt("ราคาจริง:", lastCalc.fare);
- if(real===null) return;
-
- real = Number(real);
+ let realFare = prompt("ค่าโดยสารจริง", r.fare);
+ if(!realFare) return;
 
  data.push({
-  ...lastCalc,
-  fareReal: real,
-  profit: real - lastCalc.cost,
-  time: new Date().toISOString()
+   fare: +realFare,
+   profit: realFare - (r.fare - r.profit),
+   d: r.d,
+   time: new Date().toISOString()
  });
 
  localStorage.setItem("fareData", JSON.stringify(data));
+ updateDash();
+}
+
+function setFilter(f){
+ filter=f;
+
+ document.getElementById("f_day").classList.remove("active");
+ document.getElementById("f_week").classList.remove("active");
+ document.getElementById("f_month").classList.remove("active");
+
+ document.getElementById("f_"+f).classList.add("active");
 
  updateDash();
 }
 
-// ================= SMART ROUTE =================
-function renderSmart(){
+function filterData(){
 
- let freq = {};
+ let now = new Date();
 
- data.forEach(x=>{
-  let key = Math.round(x.km);
-  freq[key] = (freq[key]||0)+1;
+ return data.filter(x=>{
+   let t = new Date(x.time);
+
+   if(filter==="day"){
+     return t.toDateString() === now.toDateString();
+   }
+
+   if(filter==="week"){
+     let diff = (now - t)/(1000*60*60*24);
+     return diff <= 7;
+   }
+
+   if(filter==="month"){
+     return t.getMonth() === now.getMonth();
+   }
+
  });
-
- let top = Object.entries(freq)
-  .sort((a,b)=>b[1]-a[1])
-  .slice(0,5);
-
- document.getElementById("smartRoutes").innerHTML =
- top.map(x=>`
-<button class="smart-btn" onclick="useSmart(${x[0]})">
-${x[0]} km (${x[1]})
-</button>
-`).join("");
 }
 
-function useSmart(km){
- document.getElementById("manualKm").value = km;
- calc();
-}
-
-// ================= DASH =================
 function updateDash(){
 
- let trips=data.length;
- let rev=data.reduce((a,b)=>a+b.fareReal,0);
- let profit=data.reduce((a,b)=>a+b.profit,0);
+ let d = filterData();
 
- document.getElementById("trips").innerText=trips;
- document.getElementById("rev").innerText=rev;
- document.getElementById("profit").innerText=profit;
- document.getElementById("avg").innerText=trips?Math.round(profit/trips):0;
-
- renderHistory();
- renderSmart();
-}
-
-// ================= HISTORY =================
-function renderHistory(){
-
- if(data.length===0){
-  document.getElementById("history").innerHTML="📭 ไม่มีข้อมูล";
+ if(d.length===0){
+  history.innerHTML = "📭 ไม่มีข้อมูล";
+  trips.innerText=0;
+  rev.innerText=0;
+  profit.innerText=0;
+  avg.innerText=0;
   return;
  }
 
- document.getElementById("history").innerHTML =
- data.slice(-5).reverse().map(x=>{
-  let t=new Date(x.time);
-  let hh=String(t.getHours()).padStart(2,'0');
-  let mm=String(t.getMinutes()).padStart(2,'0');
+ let tripsN = d.length;
+ let revN = d.reduce((a,b)=>a+b.fare,0);
+ let profitN = d.reduce((a,b)=>a+b.profit,0);
 
-  return `
-<div class="item">
-🕒 ${hh}:${mm} 💰${x.fareReal}
-<div class="small">${x.km} km | กำไร ${x.profit.toFixed(0)}</div>
-</div>`;
+ trips.innerText = tripsN;
+ rev.innerText = revN;
+ profit.innerText = profitN;
+ avg.innerText = Math.round(profitN/tripsN);
+
+ history.innerHTML = d.slice(-10).reverse().map(x=>{
+
+   let t = new Date(x.time);
+
+   return `
+<div class="card" onclick="showDetail('${x.time}')">
+🕒 ${t.getHours()}:${t.getMinutes()}  
+💰 ${x.fare}<br>
+กำไร ${x.profit}
+</div>
+`;
+
  }).join("");
 }
 
+function showDetail(time){
+
+ let x = data.find(i=>i.time===time);
+
+ alert(
+`เวลา: ${new Date(x.time).toLocaleString()}
+ระยะ: ${x.d} km
+รายรับ: ${x.fare}
+กำไร: ${x.profit}`
+);
+}
+
+function pEl(){ return document.getElementById("p"); }
+function dEl(){ return document.getElementById("d"); }
+function fEl(){ return document.getElementById("f"); }
+
 updateDash();
+calc();
 
 </script>
 
 </body>
 </html>
+
