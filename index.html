@@ -2,127 +2,138 @@
 <html lang="th">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fare Pro V7</title>
+<title>Fare Pro V10</title>
 
 <style>
-body {
- font-family:-apple-system, BlinkMacSystemFont, sans-serif;
- margin:0;
- background:#f2f2f7;
+:root{
+ --bg:#f2f2f7;
+ --card:#ffffffcc;
+ --text:#000;
+ --sub:#666;
+ --blue:#007aff;
 }
 
-.header {
+@media (prefers-color-scheme: dark){
+ :root{
+  --bg:#1c1c1e;
+  --card:#2c2c2ecc;
+  --text:#fff;
+  --sub:#aaa;
+ }
+}
+
+body{
+ margin:0;
+ font-family:-apple-system;
+ background:var(--bg);
+ color:var(--text);
+}
+
+.header{
+ text-align:center;
+ padding:14px;
+ font-size:20px;
+ font-weight:600;
+ backdrop-filter:blur(10px);
  position:sticky;
  top:0;
- background:rgba(255,255,255,0.8);
- backdrop-filter:blur(10px);
- padding:12px;
- text-align:center;
- font-weight:600;
- border-bottom:1px solid #eee;
 }
 
-.box {
- background:white;
+.box{
+ background:var(--card);
+ backdrop-filter:blur(20px);
  margin:12px;
  padding:16px;
- border-radius:16px;
- box-shadow:0 2px 10px rgba(0,0,0,0.05);
+ border-radius:18px;
 }
 
-.row {
- display:flex;
- justify-content:space-between;
- align-items:center;
+.value{
+ font-size:36px;
+ text-align:center;
+ font-weight:700;
 }
 
-.value {
- font-size:28px;
- font-weight:600;
-}
-
-button {
- border:none;
- border-radius:12px;
- background:#007aff;
- color:white;
- font-size:18px;
- padding:8px 12px;
-}
-
-.big {
+input{
  width:100%;
- height:50px;
- margin-top:10px;
- font-size:20px;
+ padding:12px;
+ font-size:18px;
+ border-radius:10px;
+ border:none;
+ margin-top:8px;
 }
 
-.segWrap {
+button{
+ width:100%;
+ padding:14px;
+ font-size:18px;
+ border:none;
+ border-radius:14px;
+ margin-top:10px;
+ background:var(--blue);
+ color:white;
+}
+
+button:active{
+ transform:scale(0.97);
+}
+
+.segWrap{
  display:flex;
- background:#e5e5ea;
+ margin:12px;
+ background:#8882;
  border-radius:12px;
  padding:3px;
- margin:12px;
 }
 
-.seg {
+.seg{
  flex:1;
  background:transparent;
- font-size:16px;
- padding:8px;
+ border:none;
+ padding:10px;
  border-radius:10px;
 }
 
-.seg.active {
+.seg.active{
  background:white;
+ color:black;
 }
 
-.card {
- padding:12px;
- border-radius:12px;
- background:#f9f9f9;
+.card{
+ padding:14px;
+ border-radius:14px;
  margin-bottom:8px;
- font-size:15px;
+ background:var(--card);
+}
+
+.small{ color:var(--sub); font-size:13px; }
+
+.grid{
+ display:flex;
+ justify-content:space-between;
+ text-align:center;
+}
+
+.metric b{
+ font-size:20px;
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">🚕 Fare Pro V7</div>
+<div class="header">🚕 Fare Pro V10</div>
 
-<!-- INPUT -->
+<!-- DISTANCE -->
 <div class="box">
-<div class="row">
-Pickup
-<div>
-<button onclick="chg('p',-1)">-</button>
-<span class="value" id="p">2</span>
-<button onclick="chg('p',1)">+</button>
-</div>
-</div>
+<div class="small">Distance</div>
+<input type="range" min="1" max="20" value="6" oninput="setD(this.value)">
+<div class="value" id="dVal">6 km</div>
 </div>
 
+<!-- FUEL -->
 <div class="box">
-<div class="row">
-Drop
-<div>
-<button onclick="chg('d',-1)">-</button>
-<span class="value" id="d">6</span>
-<button onclick="chg('d',1)">+</button>
-</div>
-</div>
-</div>
-
-<div class="box">
-<div class="row">
-Fuel
-<div>
-<button onclick="chg('f',-1)">-</button>
-<span class="value" id="f">43</span>
-<button onclick="chg('f',1)">+</button>
-</div>
-</div>
+<div class="small">Fuel (บาท/ลิตร)</div>
+<input id="f" value="43">
 </div>
 
 <!-- RESULT -->
@@ -130,100 +141,93 @@ Fuel
 
 <!-- ACTUAL -->
 <div class="box">
-Actual Fare
-<input id="actualFare" type="number" style="width:100%;padding:10px;font-size:18px;">
+<div class="small">Actual Fare</div>
+<input id="actual">
 </div>
 
-<!-- ACTION -->
-<button class="big" onclick="saveTrip()">💾 Save</button>
-<button class="big" style="background:#ff3b30;" onclick="clearData()">🗑 Clear</button>
+<button onclick="save()">Save</button>
 
 <!-- FILTER -->
 <div class="segWrap">
-<button class="seg active" id="f_day" onclick="setFilter('day')">Day</button>
-<button class="seg" id="f_week" onclick="setFilter('week')">Week</button>
-<button class="seg" id="f_month" onclick="setFilter('month')">Month</button>
+<button class="seg active" id="day" onclick="setFilter('day')">Day</button>
+<button class="seg" id="week" onclick="setFilter('week')">Week</button>
+<button class="seg" id="month" onclick="setFilter('month')">Month</button>
 </div>
 
 <!-- DASHBOARD -->
-<div class="box">
-<div style="font-size:16px;">
-Trips: <b id="trips">0</b><br>
-Revenue: <b id="rev">0</b><br>
-Profit: <b id="profit">0</b><br>
-Avg: <b id="avg">0</b>
-</div>
+<div class="box grid">
+<div class="metric">Trips<br><b id="trips">0</b></div>
+<div class="metric">Revenue<br><b id="rev">0</b></div>
+<div class="metric">Profit<br><b id="profit">0</b></div>
+<div class="metric">Avg<br><b id="avg">0</b></div>
 </div>
 
 <!-- HISTORY -->
-<div class="box">
-<div id="history">📭 No data</div>
-</div>
+<div class="box" id="history"></div>
 
 <script>
 
-let data = JSON.parse(localStorage.getItem("fareData")) || [];
-let filter = "day";
+let data=JSON.parse(localStorage.getItem("fareData"))||[];
+let d=6,filter="day";
 
-function chg(id,v){
- let el=document.getElementById(id);
- let n=parseFloat(el.innerText)+v;
- if(n<0)n=0;
- el.innerText=n;
+function setD(v){
+ d=Number(v);
+ document.getElementById("dVal").innerText=d+" km";
  calc();
+}
+
+function smart(d){
+ let s=data.filter(x=>Math.abs(x.d-d)<=1);
+ if(s.length){
+  return Math.round(s.reduce((a,b)=>a+b.fare,0)/s.length);
+ }
+ return null;
 }
 
 function calc(){
 
- let p = +document.getElementById("p").innerText;
- let d = +document.getElementById("d").innerText;
- let f = +document.getElementById("f").innerText;
+ let f=Number(document.getElementById("f").value);
+ let dist=d+(d*0.25);
+ let cost=(dist*(f/18))+50;
 
- let dist = d + p + (d * 0.25);
- let cost = (dist * (f/18)) + 50;
+ let fare=Math.max(Math.ceil(cost+30),100);
+ let profit=fare-cost;
 
- let fare = Math.max(Math.ceil(cost+30),100);
- let profit = fare - cost;
-
- let low = fare-5, mid=fare, high=fare+5;
-
- document.getElementById("res").innerHTML = `
-💰 <b style="font-size:28px;">${fare}</b><br>
-💸 Cost ${cost.toFixed(0)}<br>
-📈 Profit ${profit.toFixed(0)}<br>
-<hr>
-🤖 AI Suggested<br>
-🔴 ${low} | 🟡 ${mid} | 🟢 ${high}
+ document.getElementById("res").innerHTML=`
+<div class="value">${fare}</div>
+<div class="small">Cost ${cost.toFixed(0)} • Profit ${profit.toFixed(0)}</div>
 `;
 
- document.getElementById("actualFare").value = fare;
+ document.getElementById("actual").value=smart(d)||fare;
 
- return {fare, profit, cost};
+ return {fare,cost};
 }
 
-function saveTrip(){
- let r = calc();
- let actual = Number(document.getElementById("actualFare").value) || r.fare;
+function save(){
+ let r=calc();
+ let actual=Number(document.getElementById("actual").value)||r.fare;
 
  data.push({
-   fare: actual,
-   profit: actual - r.cost,
-   time: new Date().toISOString()
+  fare:actual,
+  cost:r.cost,
+  profit:actual-r.cost,
+  d:d,
+  time:new Date().toISOString()
  });
 
- localStorage.setItem("fareData", JSON.stringify(data));
- updateDash();
+ localStorage.setItem("fareData",JSON.stringify(data));
+ update();
 }
 
 function setFilter(f){
- filter = f;
+ filter=f;
  document.querySelectorAll(".seg").forEach(x=>x.classList.remove("active"));
- document.getElementById("f_"+f).classList.add("active");
- updateDash();
+ document.getElementById(f).classList.add("active");
+ update();
 }
 
-function getFiltered(){
- let now = new Date();
+function getData(){
+ let now=new Date();
  return data.filter(x=>{
   let t=new Date(x.time);
   if(filter==="day") return t.toDateString()===now.toDateString();
@@ -232,46 +236,50 @@ function getFiltered(){
  });
 }
 
-function updateDash(){
+function update(){
 
- let list = getFiltered();
+ let list=getData();
 
- let trips = list.length;
- let rev = list.reduce((a,b)=>a+b.fare,0);
- let profit = list.reduce((a,b)=>a+b.profit,0);
+ let trips=list.length;
+ let rev=list.reduce((a,b)=>a+b.fare,0);
+ let profit=list.reduce((a,b)=>a+b.profit,0);
 
  document.getElementById("trips").innerText=trips;
  document.getElementById("rev").innerText=rev;
  document.getElementById("profit").innerText=profit;
  document.getElementById("avg").innerText=trips?Math.round(profit/trips):0;
 
- if(list.length===0){
-  document.getElementById("history").innerHTML="📭 No data";
-  return;
- }
+ document.getElementById("history").innerHTML=list.slice(-10).reverse().map(x=>{
+ let t=new Date(x.time);
+ let hh=t.getHours().toString().padStart(2,'0');
+ let mm=t.getMinutes().toString().padStart(2,'0');
 
- document.getElementById("history").innerHTML = list.slice(-5).reverse().map(x=>{
-  let t=new Date(x.time);
-  return `
-<div class="card" onclick="alert('Fare: '+x.fare+'\nProfit: '+x.profit)">
-🕒 ${t.getHours()}:${t.getMinutes()}  
+ return `
+<div class="card" onclick="edit(${data.indexOf(x)})">
+🕒 ${hh}:${mm}
 <span style="float:right;">${x.fare}</span>
-</div>`;
- }).join("");
+<div class="small">km ${x.d} • profit ${x.profit.toFixed(0)}</div>
+</div>
+`;
+ }).join("")||"📭 No data";
 }
 
-function clearData(){
- if(confirm("Clear all data?")){
-  localStorage.clear();
-  data=[];
-  updateDash();
+function edit(i){
+ let x=data[i];
+ let nf=prompt(`Edit Fare\nKM:${x.d}\nCost:${x.cost.toFixed(0)}`,x.fare);
+ if(nf){
+  x.fare=Number(nf);
+  x.profit=x.fare-x.cost;
+  localStorage.setItem("fareData",JSON.stringify(data));
+  update();
  }
 }
 
-updateDash();
+update();
 calc();
 
 </script>
 
 </body>
 </html>
+
