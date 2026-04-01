@@ -2,284 +2,274 @@
 <html lang="th">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fare Pro V10</title>
+<title>Fare Pro V12</title>
 
 <style>
-:root{
- --bg:#f2f2f7;
- --card:#ffffffcc;
- --text:#000;
- --sub:#666;
- --blue:#007aff;
-}
-
-@media (prefers-color-scheme: dark){
- :root{
-  --bg:#1c1c1e;
-  --card:#2c2c2ecc;
-  --text:#fff;
-  --sub:#aaa;
- }
-}
-
 body{
+ font-family:-apple-system,BlinkMacSystemFont,sans-serif;
  margin:0;
- font-family:-apple-system;
- background:var(--bg);
- color:var(--text);
+ background:#f2f2f7;
 }
 
+/* HEADER */
 .header{
- text-align:center;
- padding:14px;
- font-size:20px;
- font-weight:600;
- backdrop-filter:blur(10px);
  position:sticky;
  top:0;
-}
-
-.box{
- background:var(--card);
- backdrop-filter:blur(20px);
- margin:12px;
- padding:16px;
- border-radius:18px;
-}
-
-.value{
- font-size:36px;
+ padding:12px;
  text-align:center;
  font-weight:700;
+ background:rgba(255,255,255,0.8);
+ backdrop-filter:blur(10px);
+ border-bottom:1px solid #eee;
 }
 
-input{
- width:100%;
- padding:12px;
+/* CARD */
+.box{
+ margin:12px;
+ padding:16px;
+ border-radius:20px;
+ background:rgba(255,255,255,0.75);
+ backdrop-filter:blur(10px);
+ box-shadow:0 4px 20px rgba(0,0,0,0.05);
+}
+
+/* TEXT */
+.big{
+ font-size:28px;
+ font-weight:700;
+}
+.mid{
  font-size:18px;
- border-radius:10px;
- border:none;
- margin-top:8px;
+}
+.small{
+ font-size:13px;
+ color:#888;
 }
 
+/* BUTTON */
 button{
- width:100%;
- padding:14px;
- font-size:18px;
  border:none;
  border-radius:14px;
- margin-top:10px;
- background:var(--blue);
- color:white;
+ padding:10px;
+ font-size:16px;
+ background:#007aff;
+ color:#fff;
 }
+button:active{transform:scale(0.96)}
 
-button:active{
- transform:scale(0.97);
-}
-
-.segWrap{
+.seg{
+ background:#e5e5ea;
  display:flex;
- margin:12px;
- background:#8882;
  border-radius:12px;
  padding:3px;
 }
-
-.seg{
+.seg button{
  flex:1;
  background:transparent;
- border:none;
- padding:10px;
- border-radius:10px;
+ color:#000;
+}
+.seg .active{
+ background:#fff;
+ box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
-.seg.active{
- background:white;
- color:black;
+/* RANGE */
+input[type=range]{
+ width:100%;
 }
 
-.card{
- padding:14px;
- border-radius:14px;
- margin-bottom:8px;
- background:var(--card);
-}
-
-.small{ color:var(--sub); font-size:13px; }
-
-.grid{
- display:flex;
- justify-content:space-between;
- text-align:center;
-}
-
-.metric b{
- font-size:20px;
-}
+/* STATUS */
+.good{color:#34c759}
+.midc{color:#ff9500}
+.bad{color:#ff3b30}
 </style>
 </head>
 
 <body>
 
-<div class="header">🚕 Fare Pro V10</div>
+<div class="header">🚕 Fare Pro V12</div>
 
 <!-- DISTANCE -->
 <div class="box">
-<div class="small">Distance</div>
-<input type="range" min="1" max="20" value="6" oninput="setD(this.value)">
-<div class="value" id="dVal">6 km</div>
+<div class="mid">Distance: <b id="d">6</b> km</div>
+<input type="range" min="1" max="30" value="6" oninput="setDist(this.value)">
 </div>
 
 <!-- FUEL -->
 <div class="box">
-<div class="small">Fuel (บาท/ลิตร)</div>
-<input id="f" value="43">
+<div class="mid">Fuel Price: <b id="f">43</b></div>
+<input type="range" min="30" max="60" value="43" oninput="setFuel(this.value)">
 </div>
 
 <!-- RESULT -->
 <div class="box" id="res"></div>
 
-<!-- ACTUAL -->
+<!-- ACTUAL FARE -->
 <div class="box">
-<div class="small">Actual Fare</div>
-<input id="actual">
+<div class="mid">Actual Fare</div>
+<input id="actual" type="number" placeholder="Enter actual fare"
+style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;">
 </div>
 
-<button onclick="save()">Save</button>
-
-<!-- FILTER -->
-<div class="segWrap">
-<button class="seg active" id="day" onclick="setFilter('day')">Day</button>
-<button class="seg" id="week" onclick="setFilter('week')">Week</button>
-<button class="seg" id="month" onclick="setFilter('month')">Month</button>
+<!-- ACTION -->
+<div class="box">
+<button style="width:100%" onclick="save()">Save Trip</button>
 </div>
 
-<!-- DASHBOARD -->
-<div class="box grid">
-<div class="metric">Trips<br><b id="trips">0</b></div>
-<div class="metric">Revenue<br><b id="rev">0</b></div>
-<div class="metric">Profit<br><b id="profit">0</b></div>
-<div class="metric">Avg<br><b id="avg">0</b></div>
+<!-- REPORT SWITCH -->
+<div class="box">
+<div class="seg">
+<button onclick="setView('day')" class="active" id="day">Day</button>
+<button onclick="setView('week')" id="week">Week</button>
+<button onclick="setView('month')" id="month">Month</button>
 </div>
+</div>
+
+<!-- REPORT -->
+<div class="box" id="report"></div>
 
 <!-- HISTORY -->
-<div class="box" id="history"></div>
+<div class="box">
+<div class="mid">History</div>
+<div id="history"></div>
+</div>
 
 <script>
 
-let data=JSON.parse(localStorage.getItem("fareData"))||[];
-let d=6,filter="day";
+let data = JSON.parse(localStorage.getItem("fareData"))||[];
+let view="day";
 
-function setD(v){
- d=Number(v);
- document.getElementById("dVal").innerText=d+" km";
+function setDist(v){
+ document.getElementById("d").innerText=v;
  calc();
 }
-
-function smart(d){
- let s=data.filter(x=>Math.abs(x.d-d)<=1);
- if(s.length){
-  return Math.round(s.reduce((a,b)=>a+b.fare,0)/s.length);
- }
- return null;
+function setFuel(v){
+ document.getElementById("f").innerText=v;
+ calc();
 }
 
 function calc(){
 
- let f=Number(document.getElementById("f").value);
- let dist=d+(d*0.25);
- let cost=(dist*(f/18))+50;
+ let d=+document.getElementById("d").innerText;
+ let f=+document.getElementById("f").innerText;
 
- let fare=Math.max(Math.ceil(cost+30),100);
- let profit=fare-cost;
+ let cost = d*(f/18)+50;
+
+ let base = 95 + (d-6)*5;
+ let fare = Math.max(base,cost+30);
+
+ // AI adjust from history
+ let similar = data.filter(x=>Math.abs(x.d-d)<=1);
+ if(similar.length>3){
+   let avg = similar.reduce((a,b)=>a+b.fare,0)/similar.length;
+   fare = Math.round((fare+avg)/2);
+ }
+
+ let profit = fare-cost;
+
+ let status = profit>40?"good":profit>25?"midc":"bad";
 
  document.getElementById("res").innerHTML=`
-<div class="value">${fare}</div>
-<div class="small">Cost ${cost.toFixed(0)} • Profit ${profit.toFixed(0)}</div>
+<div class="big">💰 ${fare} บาท</div>
+<div class="small">Cost ${cost.toFixed(0)} | Profit ${profit.toFixed(0)}</div>
+<div class="${status}">${status=="good"?"กำไรดี":status=="midc"?"พอดี":"ต่ำ"}</div>
 `;
 
- document.getElementById("actual").value=smart(d)||fare;
-
- return {fare,cost};
+ return {fare,profit,d};
 }
 
 function save(){
- let r=calc();
- let actual=Number(document.getElementById("actual").value)||r.fare;
+
+ let c=calc();
+ let actual = +document.getElementById("actual").value || c.fare;
+
+ let cost = c.fare - c.profit;
+ let profit = actual - cost;
 
  data.push({
-  fare:actual,
-  cost:r.cost,
-  profit:actual-r.cost,
-  d:d,
-  time:new Date().toISOString()
+   fare:actual,
+   profit,
+   d:c.d,
+   time:new Date().toISOString()
  });
 
  localStorage.setItem("fareData",JSON.stringify(data));
+
+ document.getElementById("actual").value="";
  update();
+ alert("Saved");
 }
 
-function setFilter(f){
- filter=f;
- document.querySelectorAll(".seg").forEach(x=>x.classList.remove("active"));
- document.getElementById(f).classList.add("active");
+function setView(v){
+ view=v;
+ document.querySelectorAll(".seg button").forEach(b=>b.classList.remove("active"));
+ document.getElementById(v).classList.add("active");
  update();
-}
-
-function getData(){
- let now=new Date();
- return data.filter(x=>{
-  let t=new Date(x.time);
-  if(filter==="day") return t.toDateString()===now.toDateString();
-  if(filter==="week") return (now-t)/(1000*60*60*24)<=7;
-  if(filter==="month") return t.getMonth()===now.getMonth();
- });
 }
 
 function update(){
 
- let list=getData();
-
- let trips=list.length;
- let rev=list.reduce((a,b)=>a+b.fare,0);
- let profit=list.reduce((a,b)=>a+b.profit,0);
-
- document.getElementById("trips").innerText=trips;
- document.getElementById("rev").innerText=rev;
- document.getElementById("profit").innerText=profit;
- document.getElementById("avg").innerText=trips?Math.round(profit/trips):0;
-
- document.getElementById("history").innerHTML=list.slice(-10).reverse().map(x=>{
- let t=new Date(x.time);
- let hh=t.getHours().toString().padStart(2,'0');
- let mm=t.getMinutes().toString().padStart(2,'0');
-
- return `
-<div class="card" onclick="edit(${data.indexOf(x)})">
-🕒 ${hh}:${mm}
-<span style="float:right;">${x.fare}</span>
-<div class="small">km ${x.d} • profit ${x.profit.toFixed(0)}</div>
-</div>
-`;
- }).join("")||"📭 No data";
-}
-
-function edit(i){
- let x=data[i];
- let nf=prompt(`Edit Fare\nKM:${x.d}\nCost:${x.cost.toFixed(0)}`,x.fare);
- if(nf){
-  x.fare=Number(nf);
-  x.profit=x.fare-x.cost;
-  localStorage.setItem("fareData",JSON.stringify(data));
-  update();
+ if(data.length===0){
+   document.getElementById("history").innerHTML="📭 No data";
+   document.getElementById("report").innerHTML="";
+   return;
  }
+
+ let now=new Date();
+ let filtered=data.filter(x=>{
+   let t=new Date(x.time);
+   if(view==="day") return t.toDateString()===now.toDateString();
+   if(view==="week") return (now-t)/(1000*60*60*24)<=7;
+   if(view==="month") return t.getMonth()===now.getMonth();
+ });
+
+ let rev=filtered.reduce((a,b)=>a+b.fare,0);
+ let prof=filtered.reduce((a,b)=>a+b.profit,0);
+
+ document.getElementById("report").innerHTML=`
+<div>Trips: ${filtered.length}</div>
+<div>Revenue: ${rev}</div>
+<div>Profit: ${prof}</div>
+`;
+
+ // Insight
+ let bestHour={};
+ data.forEach(x=>{
+   let h=new Date(x.time).getHours();
+   bestHour[h]=(bestHour[h]||0)+x.profit;
+ });
+
+ let topHour = Object.keys(bestHour).sort((a,b)=>bestHour[b]-bestHour[a])[0];
+
+ document.getElementById("report").innerHTML+=`
+<hr>
+<div>🔥 Peak Hour: ${topHour}:00</div>
+`;
+
+ // history by day
+ let group={};
+ data.forEach(x=>{
+ let d=new Date(x.time).toDateString();
+ (group[d]=group[d]||[]).push(x);
+ });
+
+ let html="";
+ Object.keys(group).slice(-5).reverse().forEach(day=>{
+   html+=`<div style="margin-top:10px;"><b>${day}</b></div>`;
+   group[day].forEach(x=>{
+     html+=`<div>${new Date(x.time).toLocaleTimeString()} - ${x.fare} (${x.profit})</div>`;
+   });
+ });
+
+ document.getElementById("history").innerHTML=html;
 }
 
-update();
 calc();
+update();
 
 </script>
 
 </body>
 </html>
+
 
