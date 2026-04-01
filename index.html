@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fare Pro V12</title>
+<title>Fare Pro V12.1</title>
 
 <style>
 body{
@@ -34,17 +34,9 @@ body{
 }
 
 /* TEXT */
-.big{
- font-size:28px;
- font-weight:700;
-}
-.mid{
- font-size:18px;
-}
-.small{
- font-size:13px;
- color:#888;
-}
+.big{font-size:28px;font-weight:700;}
+.mid{font-size:18px;}
+.small{font-size:13px;color:#888;}
 
 /* BUTTON */
 button{
@@ -74,20 +66,27 @@ button:active{transform:scale(0.96)}
 }
 
 /* RANGE */
-input[type=range]{
- width:100%;
-}
+input[type=range]{width:100%;}
 
 /* STATUS */
 .good{color:#34c759}
 .midc{color:#ff9500}
 .bad{color:#ff3b30}
+
+/* HISTORY ITEM */
+.item{
+ padding:10px;
+ margin-top:6px;
+ border-radius:12px;
+ background:#fff;
+ box-shadow:0 2px 5px rgba(0,0,0,0.05);
+}
 </style>
 </head>
 
 <body>
 
-<div class="header">🚕 Fare Pro V12</div>
+<div class="header">🚕 Fare Pro V12.1</div>
 
 <!-- DISTANCE -->
 <div class="box">
@@ -116,10 +115,10 @@ style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;">
 <button style="width:100%" onclick="save()">Save Trip</button>
 </div>
 
-<!-- REPORT SWITCH -->
+<!-- FILTER -->
 <div class="box">
 <div class="seg">
-<button onclick="setView('day')" class="active" id="day">Day</button>
+<button onclick="setView('day')" id="day" class="active">Day</button>
 <button onclick="setView('week')" id="week">Week</button>
 <button onclick="setView('month')" id="month">Month</button>
 </div>
@@ -136,9 +135,10 @@ style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;">
 
 <script>
 
-let data = JSON.parse(localStorage.getItem("fareData"))||[];
-let view="day";
+let data = JSON.parse(localStorage.getItem("fareData")) || [];
+let view = "day";
 
+/* INPUT */
 function setDist(v){
  document.getElementById("d").innerText=v;
  calc();
@@ -148,17 +148,18 @@ function setFuel(v){
  calc();
 }
 
+/* CALC */
 function calc(){
 
- let d=+document.getElementById("d").innerText;
- let f=+document.getElementById("f").innerText;
+ let d = +document.getElementById("d").innerText;
+ let f = +document.getElementById("f").innerText;
 
  let cost = d*(f/18)+50;
 
  let base = 95 + (d-6)*5;
  let fare = Math.max(base,cost+30);
 
- // AI adjust from history
+ // AI learning
  let similar = data.filter(x=>Math.abs(x.d-d)<=1);
  if(similar.length>3){
    let avg = similar.reduce((a,b)=>a+b.fare,0)/similar.length;
@@ -172,59 +173,70 @@ function calc(){
  document.getElementById("res").innerHTML=`
 <div class="big">💰 ${fare} บาท</div>
 <div class="small">Cost ${cost.toFixed(0)} | Profit ${profit.toFixed(0)}</div>
-<div class="${status}">${status=="good"?"กำไรดี":status=="midc"?"พอดี":"ต่ำ"}</div>
+<div class="${status}">
+${status=="good"?"🟢 กำไรดี":status=="midc"?"🟡 พอดี":"🔴 ต่ำ"}
+</div>
 `;
 
  return {fare,profit,d};
 }
 
+/* SAVE */
 function save(){
 
- let c=calc();
+ let c = calc();
  let actual = +document.getElementById("actual").value || c.fare;
 
  let cost = c.fare - c.profit;
  let profit = actual - cost;
 
  data.push({
-   fare:actual,
+   fare: actual,
    profit,
-   d:c.d,
-   time:new Date().toISOString()
+   d: c.d,
+   time: new Date().toISOString()
  });
 
- localStorage.setItem("fareData",JSON.stringify(data));
-
+ localStorage.setItem("fareData", JSON.stringify(data));
  document.getElementById("actual").value="";
+
  update();
- alert("Saved");
 }
 
+/* FILTER */
 function setView(v){
- view=v;
+ view = v;
+
  document.querySelectorAll(".seg button").forEach(b=>b.classList.remove("active"));
  document.getElementById(v).classList.add("active");
+
  update();
 }
 
-function update(){
-
- if(data.length===0){
-   document.getElementById("history").innerHTML="📭 No data";
-   document.getElementById("report").innerHTML="";
-   return;
- }
-
+/* FILTER DATA */
+function getFiltered(){
  let now=new Date();
- let filtered=data.filter(x=>{
+ return data.filter(x=>{
    let t=new Date(x.time);
    if(view==="day") return t.toDateString()===now.toDateString();
    if(view==="week") return (now-t)/(1000*60*60*24)<=7;
    if(view==="month") return t.getMonth()===now.getMonth();
  });
+}
 
- let rev=filtered.reduce((a,b)=>a+b.fare,0);
- let prof=filtered.reduce((a,b)=>a+b.profit,0);
+/* UPDATE */
+function update(){
+
+ let filtered = getFiltered();
+
+ if(filtered.length===0){
+   document.getElementById("history").innerHTML="📭 No data";
+   document.getElementById("report").innerHTML="";
+   return;
+ }
+
+ let rev = filtered.reduce((a,b)=>a+b.fare,0);
+ let prof = filtered.reduce((a,b)=>a+b.profit,0);
 
  document.getElementById("report").innerHTML=`
 <div>Trips: ${filtered.length}</div>
@@ -233,37 +245,35 @@ function update(){
 `;
 
  // Insight
- let bestHour={};
- data.forEach(x=>{
+ let hourMap={};
+ filtered.forEach(x=>{
    let h=new Date(x.time).getHours();
-   bestHour[h]=(bestHour[h]||0)+x.profit;
+   hourMap[h]=(hourMap[h]||0)+x.profit;
  });
 
- let topHour = Object.keys(bestHour).sort((a,b)=>bestHour[b]-bestHour[a])[0];
+ let peak = Object.keys(hourMap).sort((a,b)=>hourMap[b]-hourMap[a])[0];
 
  document.getElementById("report").innerHTML+=`
 <hr>
-<div>🔥 Peak Hour: ${topHour}:00</div>
+<div>🔥 Peak Hour: ${peak}:00</div>
 `;
 
- // history by day
- let group={};
- data.forEach(x=>{
- let d=new Date(x.time).toDateString();
- (group[d]=group[d]||[]).push(x);
- });
-
+ // HISTORY
  let html="";
- Object.keys(group).slice(-5).reverse().forEach(day=>{
-   html+=`<div style="margin-top:10px;"><b>${day}</b></div>`;
-   group[day].forEach(x=>{
-     html+=`<div>${new Date(x.time).toLocaleTimeString()} - ${x.fare} (${x.profit})</div>`;
-   });
+ filtered.slice().reverse().forEach(x=>{
+   let t=new Date(x.time);
+   html+=`
+<div class="item">
+🕒 ${t.toLocaleTimeString()}  
+<span style="float:right;">💰${x.fare}</span><br>
+<span class="small">กำไร ${x.profit}</span>
+</div>`;
  });
 
  document.getElementById("history").innerHTML=html;
 }
 
+/* INIT */
 calc();
 update();
 
@@ -271,5 +281,3 @@ update();
 
 </body>
 </html>
-
-
