@@ -9,9 +9,6 @@
  --main:#7c7cff;
  --bg:#f2f2f7;
  --card:rgba(255,255,255,0.9);
- --good:#34c759;
- --mid:#ff9500;
- --bad:#ff3b30;
 }
 
 body{
@@ -30,7 +27,6 @@ body{
  background:rgba(255,255,255,0.7);
  backdrop-filter:blur(12px);
  border-bottom:1px solid #eee;
- transition:.2s;
 }
 
 /* CARD */
@@ -43,9 +39,9 @@ body{
 }
 
 /* TEXT */
-.big{font-size:40px;font-weight:800;text-align:center;}
-.mid{font-size:17px;font-weight:600;}
-.small{font-size:13px;color:#666;text-align:center;}
+.big{font-size:38px;font-weight:800;text-align:center;}
+.mid{font-size:18px;font-weight:600;}
+.small{font-size:14px;color:#666;text-align:center;}
 
 /* STEP */
 .stepWrap{
@@ -61,7 +57,7 @@ body{
  background:#e9e9f5;
 }
 .value{
- font-size:46px;
+ font-size:44px;
  font-weight:800;
 }
 
@@ -71,20 +67,27 @@ body{
  background:#e9e9f5;
  border-radius:12px;
  overflow:hidden;
- margin-top:10px;
 }
 .seg button{
  flex:1;
  padding:14px;
  border:none;
  background:transparent;
- font-size:16px;
+ font-size:17px;
  font-weight:600;
 }
 .seg .active{
  background:white;
  font-weight:700;
  box-shadow:0 2px 6px rgba(0,0,0,0.08);
+}
+
+/* HISTORY */
+.item{
+ background:#fafafa;
+ padding:12px;
+ margin-top:8px;
+ border-radius:12px;
 }
 
 /* INPUT */
@@ -128,8 +131,8 @@ input{
 <div class="box">
 <div class="mid">Trip Type</div>
 <div class="seg">
-<button id="one">🚕 One Way</button>
-<button id="round">🔁 Round Trip</button>
+<button id="one">One Way</button>
+<button id="round">Round Trip</button>
 </div>
 </div>
 
@@ -139,39 +142,54 @@ input{
 <!-- ACTUAL -->
 <div class="box">
 <div class="mid">Actual Fare</div>
-<input id="actual" type="number" placeholder="Enter actual fare">
+<input id="actual" type="number">
 <button class="save" onclick="save()">Save</button>
+</div>
+
+<!-- FILTER -->
+<div class="box">
+<div class="seg">
+<button onclick="setView('day')" id="day">Day</button>
+<button onclick="setView('week')" id="week">Week</button>
+<button onclick="setView('month')" id="month">Month</button>
+</div>
+</div>
+
+<!-- REPORT -->
+<div class="box" id="report"></div>
+
+<!-- HISTORY -->
+<div class="box">
+<div id="history" class="small">Tap Day / Week / Month</div>
 </div>
 
 <script>
 let d=6;
 let mode="one";
+let view=null;
 let data=JSON.parse(localStorage.getItem("fareData"))||[];
 
-/* HOLD BUTTON */
+/* HOLD */
 let interval;
-document.getElementById("plus").onmousedown=()=>start(1);
-document.getElementById("minus").onmousedown=()=>start(-1);
+plus.onmousedown=()=>start(1);
+minus.onmousedown=()=>start(-1);
 document.onmouseup=stop;
 
-function start(val){
- interval=setInterval(()=>change(val),120);
-}
-function stop(){
- clearInterval(interval);
-}
+function start(v){interval=setInterval(()=>change(v),120);}
+function stop(){clearInterval(interval);}
 
 /* CHANGE */
-function change(val){
- d+=val;
+function change(v){
+ d+=v;
  if(d<1)d=1;if(d>30)d=30;
+ d=Math.round(d);
  document.getElementById("d").innerText=d;
  calc();
 }
 
 /* MODE */
-document.getElementById("one").onclick=()=>setMode("one");
-document.getElementById("round").onclick=()=>setMode("round");
+one.onclick=()=>setMode("one");
+round.onclick=()=>setMode("round");
 
 function setMode(m){
  mode=m;
@@ -182,45 +200,35 @@ function setMode(m){
 }
 
 /* TOP */
-function setTop(t,color="#fff"){
+function setTop(t,c="#fff"){
  let el=document.getElementById("topbar");
  el.innerText=t;
- el.style.background=color;
+ el.style.background=c;
 }
 
 /* CALC */
 function calc(){
+ let fare=90+(d-6)*4;
 
- // 🔥 Smart price (flow)
- let fare = 90 + (d-6)*4;
-
- // clamp
  if(fare<90) fare=90;
  if(d<=7 && fare>95) fare=95;
  if(d<=10 && fare>105) fare=105;
  if(d<=15 && fare>150) fare=150;
 
- let rangeMin = Math.round(fare-5);
- let rangeMax = Math.round(fare+5);
+ let finalFare = mode==="round" ? (fare*2-15) : fare;
 
- let finalFare = mode==="round" ? (fare*2 - 15) : fare;
+ let cost=d*(43/18);
+ let profit=finalFare-(mode==="round"?cost*2:cost);
 
- let cost = d*(43/18);
- let profit = finalFare - (mode==="round"?cost*2:cost);
-
- document.getElementById("res").innerHTML=`
+ res.innerHTML=`
 <div class="big">💰 ${Math.round(finalFare)}</div>
-<div class="small">Range ${rangeMin} – ${rangeMax}</div>
+<div class="small">Range ${fare-5} - ${fare+5}</div>
 <div class="small">Profit ${Math.round(profit)}</div>
 `;
 
- if(profit>60){
-  setTop("🟢 Good","#d4f8e8");
- }else if(profit<30){
-  setTop("🔴 Low","#ffe5e5");
- }else{
-  setTop("💬 OK","#f2f2f7");
- }
+ if(profit>60) setTop("🟢 Good","#d4f8e8");
+ else if(profit<30) setTop("🔴 Low","#ffe5e5");
+ else setTop("💬 OK","#f2f2f7");
 
  return {fare:finalFare,cost};
 }
@@ -228,7 +236,7 @@ function calc(){
 /* SAVE */
 function save(){
  let c=calc();
- let actual=+document.getElementById("actual").value||c.fare;
+ let actual=+actualInput.value||c.fare;
 
  data.push({
   fare:actual,
@@ -239,14 +247,66 @@ function save(){
  localStorage.setItem("fareData",JSON.stringify(data));
 
  setTop("✅ Saved","#e0f7ff");
- setTimeout(()=>setTop("💬 Ready","#f2f2f7"),1200);
+ setTimeout(()=>setTop("💬 Ready"),1000);
 
- document.getElementById("actual").value="";
+ actualInput.value="";
+ update();
+}
+
+/* VIEW */
+function setView(v){
+ view=v;
+ document.querySelectorAll(".seg button")
+ .forEach(b=>b.classList.remove("active"));
+ document.getElementById(v).classList.add("active");
+ update();
+}
+
+/* FILTER */
+function getData(){
+ let now=new Date();
+ return data.filter(x=>{
+  let t=new Date(x.time);
+  if(view==="day") return t.toDateString()===now.toDateString();
+  if(view==="week") return (now-t)/(1000*60*60*24)<=7;
+  if(view==="month") return t.getMonth()===now.getMonth() && t.getFullYear()===now.getFullYear();
+ });
+}
+
+/* UPDATE */
+function update(){
+ if(!view){
+  history.innerHTML="Tap Day / Week / Month";
+  report.innerHTML="";
+  return;
+ }
+
+ let list=getData();
+
+ if(list.length===0){
+  history.innerHTML="📭 No data";
+  report.innerHTML="";
+  return;
+ }
+
+ let rev=list.reduce((a,b)=>a+b.fare,0);
+ let prof=list.reduce((a,b)=>a+b.profit,0);
+
+ report.innerHTML=`Trips: ${list.length}<br>Revenue: ${rev}<br>Profit: ${prof}`;
+
+ let html="";
+ list.slice().reverse().forEach(x=>{
+  let t=new Date(x.time);
+  html+=`<div class="item">💰 ${x.fare}<br>${t.toLocaleTimeString()}</div>`;
+ });
+
+ history.innerHTML=html;
 }
 
 /* INIT */
 setMode("one");
 calc();
+update();
 </script>
 
 </body>
