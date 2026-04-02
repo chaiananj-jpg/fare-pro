@@ -169,7 +169,11 @@ let mode="one";
 let view=null;
 let data=JSON.parse(localStorage.getItem("fareData"))||[];
 
-/* HOLD */
+/* DOM FIX */
+const historyEl = document.getElementById("history");
+const reportEl = document.getElementById("report");
+
+/* HOLD BUTTON */
 let interval;
 plus.onmousedown=()=>start(1);
 minus.onmousedown=()=>start(-1);
@@ -222,7 +226,7 @@ function calc(){
 
  res.innerHTML=`
 <div class="big">💰 ${Math.round(finalFare)}</div>
-<div class="small">Range ${fare-5} - ${fare+5}</div>
+<div class="small">Range ${Math.round(fare-5)} - ${Math.round(fare+5)}</div>
 <div class="small">Profit ${Math.round(profit)}</div>
 `;
 
@@ -233,10 +237,10 @@ function calc(){
  return {fare:finalFare,cost};
 }
 
-/* SAVE */
+/* SAVE (FIXED) */
 function save(){
  let c=calc();
- let actual=+actualInput.value||c.fare;
+ let actual=+document.getElementById("actual").value || c.fare;
 
  data.push({
   fare:actual,
@@ -247,52 +251,58 @@ function save(){
  localStorage.setItem("fareData",JSON.stringify(data));
 
  setTop("✅ Saved","#e0f7ff");
- setTimeout(()=>setTop("💬 Ready"),1000);
+ setTimeout(()=>setTop("💬 Ready","#f2f2f7"),1000);
 
- actualInput.value="";
+ document.getElementById("actual").value="";
  update();
 }
 
 /* VIEW */
 function setView(v){
  view=v;
+
  document.querySelectorAll(".seg button")
  .forEach(b=>b.classList.remove("active"));
+
  document.getElementById(v).classList.add("active");
+
  update();
 }
 
 /* FILTER */
 function getData(){
  let now=new Date();
+
  return data.filter(x=>{
   let t=new Date(x.time);
+
   if(view==="day") return t.toDateString()===now.toDateString();
   if(view==="week") return (now-t)/(1000*60*60*24)<=7;
   if(view==="month") return t.getMonth()===now.getMonth() && t.getFullYear()===now.getFullYear();
  });
 }
 
-/* UPDATE */
+/* UPDATE (FIXED) */
 function update(){
+
  if(!view){
-  history.innerHTML="Tap Day / Week / Month";
-  report.innerHTML="";
+  historyEl.innerHTML="Tap Day / Week / Month";
+  reportEl.innerHTML="";
   return;
  }
 
  let list=getData();
 
  if(list.length===0){
-  history.innerHTML="📭 No data";
-  report.innerHTML="";
+  historyEl.innerHTML="📭 No data";
+  reportEl.innerHTML="";
   return;
  }
 
  let rev=list.reduce((a,b)=>a+b.fare,0);
  let prof=list.reduce((a,b)=>a+b.profit,0);
 
- report.innerHTML=`Trips: ${list.length}<br>Revenue: ${rev}<br>Profit: ${prof}`;
+ reportEl.innerHTML=`Trips: ${list.length}<br>Revenue: ${rev}<br>Profit: ${prof}`;
 
  let html="";
  list.slice().reverse().forEach(x=>{
@@ -300,7 +310,7 @@ function update(){
   html+=`<div class="item">💰 ${x.fare}<br>${t.toLocaleTimeString()}</div>`;
  });
 
- history.innerHTML=html;
+ historyEl.innerHTML=html;
 }
 
 /* INIT */
