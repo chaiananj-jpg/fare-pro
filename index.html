@@ -34,8 +34,7 @@ body{
  text-align:center;
  font-weight:700;
  font-size:16px;
- background:rgba(255,255,255,0.7);
- backdrop-filter:blur(12px);
+ background:#fff;
  transition:.25s;
 }
 
@@ -135,9 +134,9 @@ input{
 <div class="box">
 <div class="mid">Distance</div>
 <div class="stepWrap">
-<button class="stepBtn" onmousedown="hold('d',-1)" onmouseup="stopHold()">-</button>
+<button class="stepBtn" onclick="change('d',-1)">-</button>
 <div id="d" class="value">6</div>
-<button class="stepBtn" onmousedown="hold('d',1)" onmouseup="stopHold()">+</button>
+<button class="stepBtn" onclick="change('d',1)">+</button>
 </div>
 </div>
 
@@ -145,9 +144,9 @@ input{
 <div class="box">
 <div class="mid">Fuel</div>
 <div class="stepWrap">
-<button class="stepBtn" onmousedown="hold('f',-1)" onmouseup="stopHold()">-</button>
+<button class="stepBtn" onclick="change('f',-1)">-</button>
 <div id="f" class="value">43</div>
-<button class="stepBtn" onmousedown="hold('f',1)" onmouseup="stopHold()">+</button>
+<button class="stepBtn" onclick="change('f',1)">+</button>
 </div>
 </div>
 
@@ -157,7 +156,7 @@ input{
 <!-- ACTUAL -->
 <div class="box">
 <div class="mid">Actual Fare</div>
-<input id="actual" type="number">
+<input id="actual" type="number" placeholder="Enter actual fare">
 </div>
 
 <!-- FILTER -->
@@ -172,7 +171,7 @@ input{
 <div class="box" id="report"></div>
 
 <div class="box">
-<div id="history" class="small">Tap filter</div>
+<div id="history" class="small">Tap Day / Week / Month</div>
 </div>
 
 <div class="bottom">
@@ -182,56 +181,48 @@ input{
 
 <script>
 let data = JSON.parse(localStorage.getItem("fareData")) || [];
-let interval, view=null;
+let view = null;
 
-/* HOLD */
-function hold(id,val){
- change(id,val);
- interval=setInterval(()=>change(id,val),120);
-}
-function stopHold(){clearInterval(interval);}
+/* CHANGE VALUE */
 function change(id,val){
- let el=document.getElementById(id);
- let v=+el.innerText+val;
- if(v<1)v=1;if(v>100)v=100;
- el.innerText=v;
+ let el = document.getElementById(id);
+ let v = +el.innerText + val;
+ if(v<1)v=1;
+ if(v>100)v=100;
+ el.innerText = v;
  calc();
 }
 
 /* TOPBAR */
-function setTop(text,color){
- let t=document.getElementById("topbar");
- t.innerText=text;
- t.style.background=color;
+function setTop(text,color="#fff"){
+ let t = document.getElementById("topbar");
+ t.innerText = text;
+ t.style.background = color;
 }
 
 /* CALC */
 function calc(){
- let d=+dEl.innerText;
- let f=+fEl.innerText;
+ let d = +document.getElementById("d").innerText;
+ let f = +document.getElementById("f").innerText;
 
- let cost=d*(f/18)+50;
- let fare=Math.max(95+(d*4),cost+30);
- let profit=fare-cost;
+ let cost = d*(f/18)+50;
+ let fare = Math.max(95 + (d*4), cost + 30);
+ let profit = fare - cost;
 
  let status="mid";
  if(profit>40) status="good";
  else if(profit<25) status="bad";
 
  document.getElementById("res").innerHTML=`
-<div class="big">${fare}</div>
+<div class="big">💰 ${Math.round(fare)}</div>
 <div class="small">Cost ${cost.toFixed(0)} | Profit ${profit.toFixed(0)}</div>
 `;
 
  if(status==="good"){
   setTop("🟢 Good Deal","#d4f8e8");
-  vibrate(20);
- }
- else if(status==="bad"){
+ }else if(status==="bad"){
   setTop("🔴 Low Profit","#ffe5e5");
-  vibrate([30,50,30]);
- }
- else{
+ }else{
   setTop("💬 Ready to Quote","#f2f2f7");
  }
 
@@ -240,76 +231,104 @@ function calc(){
 
 /* SAVE */
 function save(){
- let c=calc();
- let actual=+actualEl.value||c.fare;
+ let c = calc();
+ let actual = +document.getElementById("actual").value || c.fare;
 
  data.push({
-  fare:actual,
-  profit:actual-c.cost,
-  time:new Date().toISOString()
+  fare: actual,
+  profit: actual - c.cost,
+  time: new Date().toISOString()
  });
 
- localStorage.setItem("fareData",JSON.stringify(data));
+ localStorage.setItem("fareData", JSON.stringify(data));
 
  setTop("✅ Trip Saved","#e0f7ff");
- vibrate(30);
 
- setTimeout(()=>setTop("🚕 Estimating Fare","#fff"),1500);
+ setTimeout(()=>setTop("🚕 Estimating Fare"),1200);
 
- actualEl.value="";
+ document.getElementById("actual").value="";
  update();
 }
 
-/* FILTER */
+/* VIEW */
 function setView(v){
  view=v;
- document.querySelectorAll(".seg button").forEach(b=>b.classList.remove("active"));
+
+ document.querySelectorAll(".seg button")
+ .forEach(b=>b.classList.remove("active"));
+
  document.getElementById(v).classList.add("active");
 
- setTop("📊 Viewing "+v.toUpperCase(),"#fff");
+ setTop("📊 "+v.toUpperCase());
 
  update();
 }
 
+/* FILTER (FIXED LOGIC) */
 function getData(){
  let now=new Date();
+
  return data.filter(x=>{
   let t=new Date(x.time);
-  if(view==="day") return t.toDateString()===now.toDateString();
-  if(view==="week") return (now-t)/(1000*60*60*24)<=7;
-  if(view==="month") return t.getMonth()===now.getMonth();
+
+  if(view==="day"){
+   return t.toDateString()===now.toDateString();
+  }
+
+  if(view==="week"){
+   let diff=(now - t)/(1000*60*60*24);
+   return diff<=7;
+  }
+
+  if(view==="month"){
+   return t.getMonth()===now.getMonth() &&
+          t.getFullYear()===now.getFullYear();
+  }
  });
 }
 
 /* UPDATE */
 function update(){
- if(!view){history.innerHTML="Tap filter"; return;}
+
+ if(!view){
+  history.innerHTML="Tap Day / Week / Month";
+  report.innerHTML="";
+  return;
+ }
+
  let list=getData();
- if(list.length===0){history.innerHTML="No data";return;}
+
+ if(list.length===0){
+  history.innerHTML="📭 No data";
+  report.innerHTML="";
+  return;
+ }
 
  let rev=list.reduce((a,b)=>a+b.fare,0);
  let prof=list.reduce((a,b)=>a+b.profit,0);
 
- report.innerHTML=`Trips ${list.length}<br>Revenue ${rev}<br>Profit ${prof}`;
+ report.innerHTML=`
+<div>Trips: ${list.length}</div>
+<div>Revenue: ${rev}</div>
+<div>Profit: ${prof}</div>
+`;
 
  let html="";
  list.slice().reverse().forEach(x=>{
   let t=new Date(x.time);
-  html+=`<div class="item">💰 ${x.fare}<br><span class="small">${t.toLocaleTimeString()}</span></div>`;
+
+  html+=`
+<div class="item">
+🕒 ${t.toLocaleTimeString()}
+<span style="float:right;">💰${x.fare}</span><br>
+<span class="small">Profit ${x.profit}</span>
+</div>`;
  });
+
  history.innerHTML=html;
 }
 
-/* HAPTIC */
-function vibrate(v){
- navigator.vibrate?.(v);
-}
-
 /* INIT */
-let dEl=document.getElementById("d");
-let fEl=document.getElementById("f");
-let actualEl=document.getElementById("actual");
-
 calc();
 update();
 </script>
