@@ -14,13 +14,16 @@
 :root{
  --main:#7c7cff;
  --bg:#f5f5fb;
- --card:rgba(255,255,255,0.9);
+ --card:rgba(255,255,255,0.95);
 }
+
 body{
  margin:0;
  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
  background:var(--bg);
 }
+
+/* HEADER */
 .header{
  position:sticky;
  top:0;
@@ -30,47 +33,52 @@ body{
  font-size:18px;
  background:rgba(255,255,255,0.7);
  backdrop-filter:blur(10px);
- border-bottom:1px solid #eee;
 }
+
+/* CARD */
 .box{
- margin:12px;
- padding:16px;
- border-radius:20px;
+ margin:10px 12px;
+ padding:18px;
+ border-radius:18px;
  background:var(--card);
  box-shadow:0 4px 20px rgba(0,0,0,0.05);
 }
-.big{font-size:30px;font-weight:700;}
-.mid{font-size:20px;}
-.small{font-size:14px;color:#888;}
 
+/* TEXT */
+.big{font-size:34px;font-weight:800;}
+.mid{font-size:20px;}
+.small{font-size:13px;color:#888;}
+
+/* BUTTON */
 button{
- width:100%;
  border:none;
- border-radius:14px;
- padding:14px;
- font-size:16px;
+ border-radius:12px;
+ padding:12px;
+ font-size:15px;
  background:var(--main);
  color:white;
 }
-button:active{transform:scale(0.96)}
+button:active{transform:scale(0.95)}
 
-.seg{
- display:flex;
- background:#e9e9f5;
- border-radius:12px;
- padding:3px;
-}
-.seg button{
- flex:1;
- background:transparent;
- color:#333;
-}
-.seg .active{
+/* BOTTOM BAR */
+.bottom{
+ position:fixed;
+ bottom:0;
+ width:100%;
  background:white;
- box-shadow:0 2px 5px rgba(0,0,0,0.1);
+ padding:10px;
+ display:flex;
+ gap:8px;
+ box-shadow:0 -5px 20px rgba(0,0,0,0.08);
 }
 
-input[type=range]{width:100%; accent-color:var(--main);}
+/* RANGE */
+input[type=range]{
+ width:100%;
+ accent-color:var(--main);
+}
+
+/* INPUT */
 input{
  width:100%;
  padding:12px;
@@ -79,10 +87,29 @@ input{
  font-size:16px;
 }
 
+/* SEGMENT */
+.seg{
+ display:flex;
+ background:#eee;
+ border-radius:10px;
+ overflow:hidden;
+}
+.seg button{
+ flex:1;
+ background:transparent;
+ color:#333;
+}
+.seg .active{
+ background:white;
+ font-weight:600;
+}
+
+/* STATUS */
 .good{color:#34c759}
 .midc{color:#ff9500}
 .bad{color:#ff3b30}
 
+/* HISTORY */
 .item{
  padding:10px;
  margin-top:6px;
@@ -94,20 +121,27 @@ input{
 
 <body>
 
-<div class="header">🚕 Fare Pro V13</div>
+<div class="header">🚕 Fare Pro</div>
 
-<!-- MODE -->
-<div class="box">
-<div class="seg">
-<button id="manual" class="active" onclick="setMode('manual')">Manual</button>
-<button id="gps" onclick="setMode('gps')">GPS</button>
-</div>
+<!-- SUMMARY -->
+<div class="box" style="display:flex; justify-content:space-between; text-align:center;">
+<div><div class="small">Fare</div><div id="sf" class="mid">-</div></div>
+<div><div class="small">Cost</div><div id="sc" class="mid">-</div></div>
+<div><div class="small">Profit</div><div id="sp" class="mid">-</div></div>
 </div>
 
 <!-- DISTANCE -->
 <div class="box">
 <div class="mid">📏 Distance: <b id="d">6</b> km</div>
-<input id="slider" type="range" min="1" max="30" value="6" oninput="setDist(this.value)">
+
+<div style="display:flex; gap:6px; margin:8px 0;">
+<button onclick="setDist(3)">3</button>
+<button onclick="setDist(5)">5</button>
+<button onclick="setDist(7)">7</button>
+<button onclick="setDist(10)">10</button>
+</div>
+
+<input type="range" min="1" max="30" value="6" oninput="setDist(this.value)">
 </div>
 
 <!-- FUEL -->
@@ -123,11 +157,6 @@ input{
 <div class="box">
 <div class="mid">💵 Actual Fare</div>
 <input id="actual" type="number" placeholder="Enter actual fare">
-</div>
-
-<!-- SAVE -->
-<div class="box">
-<button onclick="save()">💾 Save</button>
 </div>
 
 <!-- FILTER -->
@@ -146,78 +175,20 @@ input{
 <div class="box">
 <div class="mid">📊 History</div>
 <div id="history" class="small" style="text-align:center;padding:10px;">
-Tap Day / Week / Month to view
+Tap Day / Week / Month
 </div>
+</div>
+
+<!-- BOTTOM ACTION -->
+<div class="bottom">
+<button style="flex:2;" onclick="save()">💾 Save</button>
+<button style="flex:1;background:#ff3b30;" onclick="clearData()">🗑</button>
 </div>
 
 <script>
 
 let data = JSON.parse(localStorage.getItem("fareData")) || [];
 let view = null;
-let mode = "manual";
-
-/* GPS */
-let watchId=null;
-let last=null;
-let total=0;
-
-function setMode(m){
- mode=m;
-
- document.getElementById("manual").classList.remove("active");
- document.getElementById("gps").classList.remove("active");
- document.getElementById(m).classList.add("active");
-
- if(m==="gps"){
-  startGPS();
-  document.getElementById("slider").disabled=true;
- }else{
-  stopGPS();
-  document.getElementById("slider").disabled=false;
- }
-}
-
-/* GPS START */
-function startGPS(){
- total=0;
- last=null;
-
- watchId = navigator.geolocation.watchPosition(pos=>{
-  let lat=pos.coords.latitude;
-  let lng=pos.coords.longitude;
-
-  if(last){
-   total += getDist(last.lat,last.lng,lat,lng);
-  }
-
-  last={lat,lng};
-
-  document.getElementById("d").innerText=total.toFixed(2);
-  calc();
- });
-}
-
-/* GPS STOP */
-function stopGPS(){
- if(watchId){
-  navigator.geolocation.clearWatch(watchId);
- }
-}
-
-/* DIST */
-function getDist(a,b,c,d){
- const R=6371;
- let dLat=(c-a)*Math.PI/180;
- let dLon=(d-b)*Math.PI/180;
-
- let x=Math.sin(dLat/2)**2 +
- Math.cos(a*Math.PI/180) *
- Math.cos(c*Math.PI/180) *
- Math.sin(dLon/2)**2;
-
- let y=2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
- return R*y;
-}
 
 /* INPUT */
 function setDist(v){
@@ -229,27 +200,40 @@ function setFuel(v){
  calc();
 }
 
-/* CALC */
+/* CALC (improved formula) */
 function calc(){
+
  let d=+document.getElementById("d").innerText;
  let f=+document.getElementById("f").innerText;
 
  let cost=d*(f/18)+50;
 
- let base = d <= 6 ? 95 : 95 + (d - 6) * 5;
- let fare = Math.max(base, cost + 30);
+ let base = 95;
+ let fare = Math.max(base + (d*4), cost + 30);
 
- let profit=fare-cost;
+ let profit = fare - cost;
 
- let status=profit>40?"good":profit>25?"midc":"bad";
+ let status = profit>40?"good":profit>25?"midc":"bad";
 
  document.getElementById("res").innerHTML=`
+<div style="text-align:center;">
 <div class="big">💰 ${fare}</div>
-<div class="small">AI Recommended</div>
-<div class="small">Cost ${cost.toFixed(0)} | Profit ${profit.toFixed(0)}</div>
-<div class="${status}">
+<div class="small">Recommended</div>
+</div>
+
+<div style="display:flex; justify-content:space-between; margin-top:10px;">
+<div>Cost<br><b>${cost.toFixed(0)}</b></div>
+<div>Profit<br><b>${profit.toFixed(0)}</b></div>
+</div>
+
+<div class="${status}" style="margin-top:8px;">
 ${status=="good"?"🟢 Good":status=="midc"?"🟡 OK":"🔴 Low"}
-</div>`;
+</div>
+`;
+
+ document.getElementById("sf").innerText=fare;
+ document.getElementById("sc").innerText=cost.toFixed(0);
+ document.getElementById("sp").innerText=profit.toFixed(0);
 
  return {fare,profit,d,cost};
 }
@@ -257,23 +241,18 @@ ${status=="good"?"🟢 Good":status=="midc"?"🟡 OK":"🔴 Low"}
 /* SAVE */
 function save(){
  let c=calc();
- let input=document.getElementById("actual");
-
- let actual=+input.value || c.fare;
- let profit=actual - c.cost;
+ let actual=+document.getElementById("actual").value || c.fare;
 
  data.push({
   fare:actual,
-  profit:profit,
+  profit:actual-c.cost,
   d:c.d,
   time:new Date().toISOString()
  });
 
  localStorage.setItem("fareData",JSON.stringify(data));
 
- input.value="";
- input.blur();
-
+ document.getElementById("actual").value="";
  update();
 }
 
@@ -289,23 +268,18 @@ function setView(v){
  update();
 }
 
-/* FILTER */
+/* FILTER FIX */
 function getData(){
- if(!view) return [];
-
  let now=new Date();
 
  return data.filter(x=>{
   let t=new Date(x.time);
 
-  if(view==="day"){
-   return t.toDateString()===now.toDateString();
-  }
+  if(view==="day") return t.toDateString()===now.toDateString();
 
   if(view==="week"){
-   let first=new Date();
-   first.setDate(now.getDate()-now.getDay());
-   return t>=first;
+   let diff=(now-t)/(1000*60*60*24);
+   return diff<=7;
   }
 
   if(view==="month"){
@@ -319,24 +293,23 @@ function getData(){
 function update(){
 
  if(!view){
-  document.getElementById("history").innerHTML=
-  "Tap Day / Week / Month to view";
-  document.getElementById("report").innerHTML="";
+  history.innerHTML="Tap Day / Week / Month";
+  report.innerHTML="";
   return;
  }
 
  let list=getData();
 
  if(list.length===0){
-  document.getElementById("history").innerHTML="📭 No data";
-  document.getElementById("report").innerHTML="";
+  history.innerHTML="📭 No data";
+  report.innerHTML="";
   return;
  }
 
  let rev=list.reduce((a,b)=>a+b.fare,0);
  let prof=list.reduce((a,b)=>a+b.profit,0);
 
- document.getElementById("report").innerHTML=`
+ report.innerHTML=`
 <div>Trips: ${list.length}</div>
 <div>Revenue: ${rev}</div>
 <div>Profit: ${prof}</div>
@@ -348,16 +321,26 @@ function update(){
 
   html+=`
 <div class="item">
-🕒 ${t.toLocaleTimeString()} 
-<span style="float:right;">💰${x.fare}</span><br>
-<span class="small">Profit ${x.profit}</span>
+<div style="display:flex; justify-content:space-between;">
+<div>💰 ${x.fare}</div>
+<div class="small">${t.toLocaleTimeString()}</div>
+</div>
+<div class="small">📏 ${x.d} km | Profit ${x.profit}</div>
 </div>`;
  });
 
- document.getElementById("history").innerHTML=html;
+ history.innerHTML=html;
 }
 
-/* INIT */
+/* CLEAR */
+function clearData(){
+ if(confirm("Clear all data?")){
+  localStorage.clear();
+  data=[];
+  update();
+ }
+}
+
 calc();
 update();
 
@@ -365,4 +348,3 @@ update();
 
 </body>
 </html>
-
