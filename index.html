@@ -2,13 +2,16 @@
 <html lang="th">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fare Pro</title>
+<title>Fare Pro V14</title>
 
 <style>
 :root{
  --main:#7c7cff;
  --bg:#f2f2f7;
  --card:rgba(255,255,255,0.9);
+ --good:#34c759;
+ --mid:#ff9500;
+ --bad:#ff3b30;
 }
 
 body{
@@ -24,8 +27,8 @@ body{
  padding:12px;
  text-align:center;
  font-weight:600;
- background:rgba(255,255,255,0.7);
  backdrop-filter:blur(12px);
+ background:rgba(255,255,255,0.7);
  border-bottom:1px solid #eee;
 }
 
@@ -39,7 +42,7 @@ body{
 }
 
 /* TEXT */
-.big{font-size:38px;font-weight:800;text-align:center;}
+.big{font-size:40px;font-weight:800;text-align:center;}
 .mid{font-size:18px;font-weight:600;}
 .small{font-size:14px;color:#666;text-align:center;}
 
@@ -57,7 +60,7 @@ body{
  background:#e9e9f5;
 }
 .value{
- font-size:44px;
+ font-size:42px;
  font-weight:800;
 }
 
@@ -67,18 +70,18 @@ body{
  background:#e9e9f5;
  border-radius:12px;
  overflow:hidden;
+ margin-top:8px;
 }
 .seg button{
  flex:1;
  padding:14px;
  border:none;
- background:transparent;
- font-size:17px;
+ font-size:16px;
  font-weight:600;
+ background:transparent;
 }
 .seg .active{
- background:white;
- font-weight:700;
+ background:#fff;
  box-shadow:0 2px 6px rgba(0,0,0,0.08);
 }
 
@@ -106,7 +109,7 @@ input{
  border:none;
  border-radius:14px;
  background:var(--main);
- color:white;
+ color:#fff;
  font-size:16px;
  margin-top:10px;
 }
@@ -119,11 +122,21 @@ input{
 
 <!-- DIST -->
 <div class="box">
-<div class="mid">Distance</div>
+<div class="mid">Distance (km)</div>
 <div class="stepWrap">
 <button class="stepBtn" id="minus">-</button>
 <div id="d" class="value">6</div>
 <button class="stepBtn" id="plus">+</button>
+</div>
+</div>
+
+<!-- FUEL -->
+<div class="box">
+<div class="mid">Fuel (฿/L)</div>
+<div class="stepWrap">
+<button class="stepBtn" id="fminus">-</button>
+<div id="f" class="value">43</div>
+<button class="stepBtn" id="fplus">+</button>
 </div>
 </div>
 
@@ -165,21 +178,31 @@ input{
 
 <script>
 let d=6;
+let f=43;
 let mode="one";
 let view=null;
 let data=JSON.parse(localStorage.getItem("fareData"))||[];
 
-/* DOM FIX */
-const historyEl = document.getElementById("history");
-const reportEl = document.getElementById("report");
+const historyEl=document.getElementById("history");
+const reportEl=document.getElementById("report");
 
-/* HOLD BUTTON */
+/* HOLD */
 let interval;
 plus.onmousedown=()=>start(1);
 minus.onmousedown=()=>start(-1);
+fplus.onmousedown=()=>startFuel(1);
+fminus.onmousedown=()=>startFuel(-1);
 document.onmouseup=stop;
 
 function start(v){interval=setInterval(()=>change(v),120);}
+function startFuel(v){
+ interval=setInterval(()=>{
+  f+=v;
+  if(f<30)f=30;if(f>60)f=60;
+  document.getElementById("f").innerText=f;
+  calc();
+ },120);
+}
 function stop(){clearInterval(interval);}
 
 /* CHANGE */
@@ -212,16 +235,18 @@ function setTop(t,c="#fff"){
 
 /* CALC */
 function calc(){
+
  let fare=90+(d-6)*4;
+ fare+=(f-43)*0.8;
 
  if(fare<90) fare=90;
  if(d<=7 && fare>95) fare=95;
  if(d<=10 && fare>105) fare=105;
  if(d<=15 && fare>150) fare=150;
 
- let finalFare = mode==="round" ? (fare*2-15) : fare;
+ let finalFare=mode==="round"?(fare*2-15):fare;
 
- let cost=d*(43/18);
+ let cost=d*(f/18);
  let profit=finalFare-(mode==="round"?cost*2:cost);
 
  res.innerHTML=`
@@ -237,10 +262,10 @@ function calc(){
  return {fare:finalFare,cost};
 }
 
-/* SAVE (FIXED) */
+/* SAVE */
 function save(){
  let c=calc();
- let actual=+document.getElementById("actual").value || c.fare;
+ let actual=+document.getElementById("actual").value||c.fare;
 
  data.push({
   fare:actual,
@@ -251,7 +276,7 @@ function save(){
  localStorage.setItem("fareData",JSON.stringify(data));
 
  setTop("✅ Saved","#e0f7ff");
- setTimeout(()=>setTop("💬 Ready","#f2f2f7"),1000);
+ setTimeout(()=>setTop("💬 Ready"),1000);
 
  document.getElementById("actual").value="";
  update();
@@ -260,31 +285,24 @@ function save(){
 /* VIEW */
 function setView(v){
  view=v;
-
- document.querySelectorAll(".seg button")
- .forEach(b=>b.classList.remove("active"));
-
+ document.querySelectorAll(".seg button").forEach(b=>b.classList.remove("active"));
  document.getElementById(v).classList.add("active");
-
  update();
 }
 
 /* FILTER */
 function getData(){
  let now=new Date();
-
  return data.filter(x=>{
   let t=new Date(x.time);
-
   if(view==="day") return t.toDateString()===now.toDateString();
   if(view==="week") return (now-t)/(1000*60*60*24)<=7;
   if(view==="month") return t.getMonth()===now.getMonth() && t.getFullYear()===now.getFullYear();
  });
 }
 
-/* UPDATE (FIXED) */
+/* UPDATE */
 function update(){
-
  if(!view){
   historyEl.innerHTML="Tap Day / Week / Month";
   reportEl.innerHTML="";
