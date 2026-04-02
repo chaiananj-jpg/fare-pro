@@ -14,21 +14,16 @@
 :root{
  --main:#7c7cff;
  --bg:#f5f5fb;
- --card:rgba(255,255,255,0.92);
- --text:#111;
- --sub:#8e8e93;
+ --card:rgba(255,255,255,0.95);
  --good:#34c759;
  --mid:#ff9500;
  --bad:#ff3b30;
 }
 
-*{box-sizing:border-box}
-
 body{
  margin:0;
  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
  background:var(--bg);
- color:var(--text);
 }
 
 /* HEADER */
@@ -38,46 +33,41 @@ body{
  padding:14px;
  text-align:center;
  font-weight:700;
- font-size:18px;
+ font-size:16px;
  background:rgba(255,255,255,0.7);
  backdrop-filter:blur(12px);
- border-bottom:1px solid #eee;
+ transition:.25s;
 }
 
 /* CARD */
 .box{
- margin:10px 12px;
+ margin:10px;
  padding:16px;
  border-radius:18px;
  background:var(--card);
- backdrop-filter:blur(10px);
  box-shadow:0 4px 20px rgba(0,0,0,0.05);
 }
 
 /* TEXT */
-.big{font-size:36px;font-weight:800;}
+.big{font-size:34px;font-weight:800;}
 .mid{font-size:18px;}
-.small{font-size:13px;color:var(--sub);}
+.small{font-size:13px;color:#888;}
 
-/* STEP BUTTON */
+/* STEP */
 .stepWrap{
  display:flex;
  justify-content:space-between;
  align-items:center;
- margin-top:10px;
 }
 .stepBtn{
- width:56px;
- height:56px;
+ width:55px;height:55px;
  border-radius:50%;
- font-size:22px;
  border:none;
+ font-size:22px;
  background:#e9e9f5;
 }
-.stepBtn:active{transform:scale(0.92)}
-
 .value{
- font-size:42px;
+ font-size:40px;
  font-weight:800;
 }
 
@@ -85,9 +75,8 @@ body{
 input{
  width:100%;
  padding:12px;
- border-radius:12px;
+ border-radius:10px;
  border:1px solid #ddd;
- font-size:16px;
 }
 
 /* SEGMENT */
@@ -95,51 +84,43 @@ input{
  display:flex;
  background:#e9e9f5;
  border-radius:12px;
- overflow:hidden;
 }
 .seg button{
  flex:1;
- padding:10px;
  border:none;
  background:transparent;
- font-size:14px;
+ padding:10px;
 }
 .seg .active{
  background:white;
  font-weight:600;
 }
 
-/* STATUS */
-.good{color:var(--good)}
-.midc{color:var(--mid)}
-.bad{color:var(--bad)}
-
 /* HISTORY */
 .item{
+ background:white;
  padding:10px;
  margin-top:6px;
  border-radius:12px;
- background:white;
 }
 
-/* BOTTOM BAR */
+/* BOTTOM */
 .bottom{
  position:fixed;
  bottom:0;
  width:100%;
- background:white;
- padding:10px;
  display:flex;
- gap:8px;
- box-shadow:0 -6px 20px rgba(0,0,0,0.08);
+ gap:6px;
+ padding:10px;
+ background:white;
 }
 .bottom button{
  flex:1;
  padding:14px;
  border:none;
  border-radius:12px;
- font-size:16px;
  color:white;
+ font-size:16px;
 }
 .save{background:var(--main)}
 .clear{background:#ff3b30}
@@ -148,44 +129,25 @@ input{
 
 <body>
 
-<div class="header">🚕 Fare Pro</div>
+<div class="header" id="topbar">🚕 Estimating Fare</div>
 
-<!-- SUMMARY -->
-<div class="box" style="display:flex;justify-content:space-between;text-align:center;">
-<div><div class="small">Fare</div><div id="sf" class="mid">-</div></div>
-<div><div class="small">Cost</div><div id="sc" class="mid">-</div></div>
-<div><div class="small">Profit</div><div id="sp" class="mid">-</div></div>
-</div>
-
-<!-- DISTANCE -->
+<!-- DIST -->
 <div class="box">
-<div class="mid">📏 Distance</div>
-
+<div class="mid">Distance</div>
 <div class="stepWrap">
-<button class="stepBtn"
-onmousedown="hold('d',-1)" onmouseup="stopHold()" ontouchstart="hold('d',-1)" ontouchend="stopHold()">-</button>
-
-<div class="value" id="d">6</div>
-
-<button class="stepBtn"
-onmousedown="hold('d',1)" onmouseup="stopHold()" ontouchstart="hold('d',1)" ontouchend="stopHold()">+</button>
+<button class="stepBtn" onmousedown="hold('d',-1)" onmouseup="stopHold()">-</button>
+<div id="d" class="value">6</div>
+<button class="stepBtn" onmousedown="hold('d',1)" onmouseup="stopHold()">+</button>
 </div>
-
-<div class="small" style="text-align:center;">km</div>
 </div>
 
 <!-- FUEL -->
 <div class="box">
-<div class="mid">⛽ Fuel</div>
-
+<div class="mid">Fuel</div>
 <div class="stepWrap">
-<button class="stepBtn"
-onmousedown="hold('f',-1)" onmouseup="stopHold()" ontouchstart="hold('f',-1)" ontouchend="stopHold()">-</button>
-
-<div class="value" id="f">43</div>
-
-<button class="stepBtn"
-onmousedown="hold('f',1)" onmouseup="stopHold()" ontouchstart="hold('f',1)" ontouchend="stopHold()">+</button>
+<button class="stepBtn" onmousedown="hold('f',-1)" onmouseup="stopHold()">-</button>
+<div id="f" class="value">43</div>
+<button class="stepBtn" onmousedown="hold('f',1)" onmouseup="stopHold()">+</button>
 </div>
 </div>
 
@@ -194,8 +156,8 @@ onmousedown="hold('f',1)" onmouseup="stopHold()" ontouchstart="hold('f',1)" onto
 
 <!-- ACTUAL -->
 <div class="box">
-<div class="mid">💵 Actual Fare</div>
-<input id="actual" type="number" placeholder="Enter actual fare">
+<div class="mid">Actual Fare</div>
+<input id="actual" type="number">
 </div>
 
 <!-- FILTER -->
@@ -207,161 +169,146 @@ onmousedown="hold('f',1)" onmouseup="stopHold()" ontouchstart="hold('f',1)" onto
 </div>
 </div>
 
-<!-- REPORT -->
 <div class="box" id="report"></div>
 
-<!-- HISTORY -->
 <div class="box">
-<div class="mid">📊 History</div>
-<div id="history" class="small" style="text-align:center;padding:10px;">
-Tap Day / Week / Month
-</div>
+<div id="history" class="small">Tap filter</div>
 </div>
 
-<!-- ACTION -->
 <div class="bottom">
-<button class="save" onclick="save()">💾 Save</button>
-<button class="clear" onclick="clearData()">🗑</button>
+<button class="save" onclick="save()">Save</button>
+<button class="clear" onclick="clearData()">Clear</button>
 </div>
 
 <script>
 let data = JSON.parse(localStorage.getItem("fareData")) || [];
-let view=null;
-let interval;
+let interval, view=null;
 
-/* HOLD INPUT */
+/* HOLD */
 function hold(id,val){
  change(id,val);
  interval=setInterval(()=>change(id,val),120);
 }
-function stopHold(){ clearInterval(interval); }
-
+function stopHold(){clearInterval(interval);}
 function change(id,val){
  let el=document.getElementById(id);
  let v=+el.innerText+val;
- if(v<1)v=1;
- if(v>100)v=100;
+ if(v<1)v=1;if(v>100)v=100;
  el.innerText=v;
  calc();
 }
 
+/* TOPBAR */
+function setTop(text,color){
+ let t=document.getElementById("topbar");
+ t.innerText=text;
+ t.style.background=color;
+}
+
 /* CALC */
 function calc(){
- let d=+document.getElementById("d").innerText;
- let f=+document.getElementById("f").innerText;
+ let d=+dEl.innerText;
+ let f=+fEl.innerText;
 
  let cost=d*(f/18)+50;
- let fare=Math.max(95+(d*4), cost+30);
+ let fare=Math.max(95+(d*4),cost+30);
  let profit=fare-cost;
 
- let status=profit>40?"good":profit>25?"midc":"bad";
+ let status="mid";
+ if(profit>40) status="good";
+ else if(profit<25) status="bad";
 
  document.getElementById("res").innerHTML=`
-<div style="text-align:center;">
-<div class="big">💰 ${fare}</div>
-<div class="small">Recommended</div>
-</div>
+<div class="big">${fare}</div>
+<div class="small">Cost ${cost.toFixed(0)} | Profit ${profit.toFixed(0)}</div>
+`;
 
-<div style="display:flex;justify-content:space-between;margin-top:10px;">
-<div>Cost<br><b>${cost.toFixed(0)}</b></div>
-<div>Profit<br><b>${profit.toFixed(0)}</b></div>
-</div>
+ if(status==="good"){
+  setTop("🟢 Good Deal","#d4f8e8");
+  vibrate(20);
+ }
+ else if(status==="bad"){
+  setTop("🔴 Low Profit","#ffe5e5");
+  vibrate([30,50,30]);
+ }
+ else{
+  setTop("💬 Ready to Quote","#f2f2f7");
+ }
 
-<div class="${status}" style="margin-top:8px;">
-${status=="good"?"🟢 Good":status=="midc"?"🟡 OK":"🔴 Low"}
-</div>`;
-
- sf.innerText=fare;
- sc.innerText=cost.toFixed(0);
- sp.innerText=profit.toFixed(0);
-
- return {fare,profit,d,cost};
+ return {fare,profit,cost};
 }
 
 /* SAVE */
 function save(){
  let c=calc();
- let actual=+document.getElementById("actual").value || c.fare;
+ let actual=+actualEl.value||c.fare;
 
  data.push({
   fare:actual,
   profit:actual-c.cost,
-  d:c.d,
   time:new Date().toISOString()
  });
 
  localStorage.setItem("fareData",JSON.stringify(data));
- document.getElementById("actual").value="";
- update();
-}
 
-/* VIEW */
-function setView(v){
- view=v;
- document.querySelectorAll(".seg button").forEach(b=>b.classList.remove("active"));
- document.getElementById(v).classList.add("active");
+ setTop("✅ Trip Saved","#e0f7ff");
+ vibrate(30);
+
+ setTimeout(()=>setTop("🚕 Estimating Fare","#fff"),1500);
+
+ actualEl.value="";
  update();
 }
 
 /* FILTER */
+function setView(v){
+ view=v;
+ document.querySelectorAll(".seg button").forEach(b=>b.classList.remove("active"));
+ document.getElementById(v).classList.add("active");
+
+ setTop("📊 Viewing "+v.toUpperCase(),"#fff");
+
+ update();
+}
+
 function getData(){
  let now=new Date();
  return data.filter(x=>{
   let t=new Date(x.time);
   if(view==="day") return t.toDateString()===now.toDateString();
   if(view==="week") return (now-t)/(1000*60*60*24)<=7;
-  if(view==="month") return t.getMonth()===now.getMonth() && t.getFullYear()===now.getFullYear();
+  if(view==="month") return t.getMonth()===now.getMonth();
  });
 }
 
 /* UPDATE */
 function update(){
- if(!view){
-  history.innerHTML="Tap Day / Week / Month";
-  report.innerHTML="";
-  return;
- }
-
+ if(!view){history.innerHTML="Tap filter"; return;}
  let list=getData();
-
- if(list.length===0){
-  history.innerHTML="📭 No data";
-  report.innerHTML="";
-  return;
- }
+ if(list.length===0){history.innerHTML="No data";return;}
 
  let rev=list.reduce((a,b)=>a+b.fare,0);
  let prof=list.reduce((a,b)=>a+b.profit,0);
 
- report.innerHTML=`
-<div>Trips: ${list.length}</div>
-<div>Revenue: ${rev}</div>
-<div>Profit: ${prof}</div>`;
+ report.innerHTML=`Trips ${list.length}<br>Revenue ${rev}<br>Profit ${prof}`;
 
  let html="";
  list.slice().reverse().forEach(x=>{
   let t=new Date(x.time);
-  html+=`
-<div class="item">
-<div style="display:flex;justify-content:space-between;">
-<div>💰 ${x.fare}</div>
-<div class="small">${t.toLocaleTimeString()}</div>
-</div>
-<div class="small">📏 ${x.d} km | Profit ${x.profit}</div>
-</div>`;
+  html+=`<div class="item">💰 ${x.fare}<br><span class="small">${t.toLocaleTimeString()}</span></div>`;
  });
-
  history.innerHTML=html;
 }
 
-/* CLEAR */
-function clearData(){
- if(confirm("Clear all data?")){
-  localStorage.clear();
-  data=[];
-  update();
- }
+/* HAPTIC */
+function vibrate(v){
+ navigator.vibrate?.(v);
 }
+
+/* INIT */
+let dEl=document.getElementById("d");
+let fEl=document.getElementById("f");
+let actualEl=document.getElementById("actual");
 
 calc();
 update();
