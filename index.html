@@ -158,35 +158,86 @@ let mode="one";
 
 let data=JSON.parse(localStorage.getItem("fareData"))||[];
 
-/* HOLD */
-let interval;
-plus.onmousedown=()=>start(1);
-minus.onmousedown=()=>start(-1);
-fplus.onmousedown=()=>startFuel(1);
-fminus.onmousedown=()=>startFuel(-1);
-document.onmouseup=stop;
+/* ===================== */
+/* UNIVERSAL BUTTON ENGINE */
+/* ===================== */
 
-function start(v){interval=setInterval(()=>change(v),120);}
-function startFuel(v){
- interval=setInterval(()=>{
-  f+=v;
-  if(f<30)f=30;if(f>60)f=60;
-  document.getElementById("f").innerText=f;
-  calc();
- },120);
+let interval=null;
+
+function attachHold(btn, fn){
+ // click (tap once)
+ btn.addEventListener("click", fn);
+
+ // hold (continuous)
+ btn.addEventListener("mousedown", ()=>startHold(fn));
+ btn.addEventListener("touchstart", ()=>startHold(fn));
+
+ // stop
+ btn.addEventListener("mouseup", stopHold);
+ btn.addEventListener("mouseleave", stopHold);
+ btn.addEventListener("touchend", stopHold);
 }
-function stop(){clearInterval(interval);}
 
-/* CHANGE */
-function change(v){
- d+=v;
- if(d<1)d=1;if(d>30)d=30;
- d=Math.round(d);
+function startHold(fn){
+ stopHold();
+ interval=setInterval(fn,120);
+}
+
+function stopHold(){
+ if(interval){
+  clearInterval(interval);
+  interval=null;
+ }
+}
+
+/* ===================== */
+/* DISTANCE */
+/* ===================== */
+
+function incD(){
+ d++;
+ if(d>30)d=30;
+ updateD();
+}
+function decD(){
+ d--;
+ if(d<1)d=1;
+ updateD();
+}
+function updateD(){
  document.getElementById("d").innerText=d;
  calc();
 }
 
+/* ===================== */
+/* FUEL */
+/* ===================== */
+
+function incF(){
+ f++;
+ if(f>60)f=60;
+ updateF();
+}
+function decF(){
+ f--;
+ if(f<30)f=30;
+ updateF();
+}
+function updateF(){
+ document.getElementById("f").innerText=f;
+ calc();
+}
+
+/* attach buttons */
+attachHold(document.getElementById("plus"), incD);
+attachHold(document.getElementById("minus"), decD);
+attachHold(document.getElementById("fplus"), incF);
+attachHold(document.getElementById("fminus"), decF);
+
+/* ===================== */
 /* MODE */
+/* ===================== */
+
 one.onclick=()=>setMode("one");
 round.onclick=()=>setMode("round");
 
@@ -198,19 +249,25 @@ function setMode(m){
  calc();
 }
 
-/* TOP */
+/* ===================== */
+/* TOP STATUS */
+/* ===================== */
+
 function setTop(t,c="#fff"){
  let el=document.getElementById("topbar");
  el.innerText=t;
  el.style.background=c;
 }
 
-/* CALC */
+/* ===================== */
+/* CALC ENGINE */
+/* ===================== */
+
 function calc(){
 
  let fare=90+(d-6)*4;
 
- // 🔥 dynamic fuel impact
+ // fuel impact
  fare += (f-43)*0.8;
 
  // clamp
@@ -219,27 +276,34 @@ function calc(){
  if(d<=10 && fare>105) fare=105;
  if(d<=15 && fare>150) fare=150;
 
- let finalFare=mode==="round"?(fare*2-15):fare;
+ let finalFare = mode==="round" ? (fare*2-15) : fare;
 
- let cost=d*(f/18);
- let profit=finalFare-(mode==="round"?cost*2:cost);
+ let cost = d*(f/18);
+ let profit = finalFare - (mode==="round"?cost*2:cost);
 
- res.innerHTML=`
+ document.getElementById("res").innerHTML=`
 <div class="big">💰 ${Math.round(finalFare)}</div>
 <div class="small">Cost ${Math.round(cost)} | Profit ${Math.round(profit)}</div>
 `;
 
- if(profit>60) setTop("🟢 Good","#d4f8e8");
- else if(profit<30) setTop("🔴 Low","#ffe5e5");
- else setTop("💬 OK","#f2f2f7");
+ if(profit>60){
+  setTop("🟢 Good","#d4f8e8");
+ }else if(profit<30){
+  setTop("🔴 Low","#ffe5e5");
+ }else{
+  setTop("💬 OK","#f2f2f7");
+ }
 
  return {fare:finalFare,cost};
 }
 
+/* ===================== */
 /* SAVE */
+/* ===================== */
+
 function save(){
  let c=calc();
- let actual=+document.getElementById("actual").value||c.fare;
+ let actual=+document.getElementById("actual").value || c.fare;
 
  data.push({
   fare:actual,
@@ -250,7 +314,7 @@ function save(){
  localStorage.setItem("fareData",JSON.stringify(data));
 
  setTop("✅ Saved","#e0f7ff");
- setTimeout(()=>setTop("💬 Ready"),1000);
+ setTimeout(()=>setTop("💬 Ready","#f2f2f7"),1000);
 
  document.getElementById("actual").value="";
 }
