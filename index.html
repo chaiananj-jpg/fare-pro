@@ -15,9 +15,6 @@
  --main:#7c7cff;
  --bg:#f2f2f7;
  --card:#ffffff;
- --good:#34c759;
- --mid:#ff9500;
- --bad:#ff3b30;
 }
 
 body{
@@ -34,9 +31,9 @@ body{
  text-align:center;
  font-weight:600;
  font-size:16px;
- background:rgba(255,255,255,0.85);
- backdrop-filter:blur(12px);
+ background:#fff;
  border-bottom:1px solid #eee;
+ transition:.2s;
 }
 
 /* CARD */
@@ -56,9 +53,8 @@ body{
 /* STEP */
 .stepWrap{
  display:flex;
- align-items:center;
  justify-content:space-between;
- margin-top:10px;
+ align-items:center;
 }
 .stepBtn{
  width:60px;height:60px;
@@ -73,13 +69,11 @@ body{
 }
 
 /* RESULT */
-.resultBox{
- text-align:center;
-}
 .subInfo{
  margin-top:6px;
  font-size:14px;
  color:#666;
+ text-align:center;
 }
 
 /* INPUT */
@@ -111,12 +105,6 @@ input{
  background:white;
  font-weight:700;
  box-shadow:0 2px 6px rgba(0,0,0,0.08);
-}
-
-/* REPORT */
-.report{
- font-size:15px;
- line-height:1.6;
 }
 
 /* HISTORY */
@@ -153,7 +141,7 @@ input{
 
 <body>
 
-<div class="header" id="topbar">🚕 Estimating Fare</div>
+<div class="header" id="topbar">💬 Ready to Quote</div>
 
 <!-- DIST -->
 <div class="box">
@@ -176,7 +164,7 @@ input{
 </div>
 
 <!-- RESULT -->
-<div class="box resultBox" id="res"></div>
+<div class="box" id="res"></div>
 
 <!-- ACTUAL -->
 <div class="box">
@@ -194,7 +182,7 @@ input{
 </div>
 
 <!-- REPORT -->
-<div class="box report" id="report"></div>
+<div class="box" id="report"></div>
 
 <!-- HISTORY -->
 <div class="box">
@@ -208,7 +196,10 @@ input{
 
 <script>
 let data = JSON.parse(localStorage.getItem("fareData")) || [];
-let view=null;
+let view = null;
+
+const historyEl = document.getElementById("history");
+const reportEl = document.getElementById("report");
 
 /* CHANGE */
 function change(id,val){
@@ -235,18 +226,14 @@ function calc(){
  let fare=Math.max(95+(d*4),cost+30);
  let profit=fare-cost;
 
- let status="mid";
- if(profit>40) status="good";
- else if(profit<25) status="bad";
-
  document.getElementById("res").innerHTML=`
-<div class="big">💰 ${Math.round(fare)}</div>
+<div class="big" style="text-align:center;">💰 ${Math.round(fare)}</div>
 <div class="subInfo">Cost ${cost.toFixed(0)} • Profit ${profit.toFixed(0)}</div>
 `;
 
- if(status==="good"){
+ if(profit>40){
   setTop("🟢 Good Deal","#d4f8e8");
- }else if(status==="bad"){
+ }else if(profit<25){
   setTop("🔴 Low Profit","#ffe5e5");
  }else{
   setTop("💬 Ready to Quote","#f2f2f7");
@@ -269,10 +256,19 @@ function save(){
  localStorage.setItem("fareData",JSON.stringify(data));
 
  setTop("✅ Trip Saved","#e0f7ff");
- setTimeout(()=>setTop("🚕 Estimating Fare"),1200);
+ setTimeout(()=>setTop("💬 Ready to Quote","#f2f2f7"),1200);
 
  document.getElementById("actual").value="";
  update();
+}
+
+/* CLEAR */
+function clearData(){
+ if(confirm("Clear all data?")){
+  data=[];
+  localStorage.removeItem("fareData");
+  update();
+ }
 }
 
 /* VIEW */
@@ -293,6 +289,7 @@ function getData(){
  let now=new Date();
  return data.filter(x=>{
   let t=new Date(x.time);
+
   if(view==="day") return t.toDateString()===now.toDateString();
   if(view==="week") return (now-t)/(1000*60*60*24)<=7;
   if(view==="month") return t.getMonth()===now.getMonth() && t.getFullYear()===now.getFullYear();
@@ -301,23 +298,25 @@ function getData(){
 
 /* UPDATE */
 function update(){
+
  if(!view){
-  history.innerHTML="Tap Day / Week / Month";
-  report.innerHTML="";
+  historyEl.innerHTML="Tap Day / Week / Month";
+  reportEl.innerHTML="";
   return;
  }
 
  let list=getData();
+
  if(list.length===0){
-  history.innerHTML="📭 No data";
-  report.innerHTML="";
+  historyEl.innerHTML="📭 No data";
+  reportEl.innerHTML="";
   return;
  }
 
  let rev=list.reduce((a,b)=>a+b.fare,0);
  let prof=list.reduce((a,b)=>a+b.profit,0);
 
- report.innerHTML=`Trips: ${list.length}<br>Revenue: ${rev}<br>Profit: ${prof}`;
+ reportEl.innerHTML=`Trips: ${list.length}<br>Revenue: ${rev}<br>Profit: ${prof}`;
 
  let html="";
  list.slice().reverse().forEach(x=>{
@@ -325,7 +324,7 @@ function update(){
   html+=`<div class="item">💰 ${x.fare}<br><span class="small">${t.toLocaleTimeString()}</span></div>`;
  });
 
- history.innerHTML=html;
+ historyEl.innerHTML=html;
 }
 
 /* INIT */
