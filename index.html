@@ -3,18 +3,15 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<link rel="apple-touch-icon" href="icon.png">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Fare Pro">
-<meta name="theme-color" content="#7c7cff">
-
 <title>Fare Pro</title>
 
 <style>
 :root{
  --main:#7c7cff;
  --bg:#f2f2f7;
- --card:#ffffff;
+ --card:rgba(255,255,255,0.9);
+ --good:#34c759;
+ --bad:#ff3b30;
 }
 
 body{
@@ -23,32 +20,31 @@ body{
  background:var(--bg);
 }
 
-/* HEADER */
+/* HEADER (iOS glass) */
 .header{
  position:sticky;
  top:0;
  padding:12px;
  text-align:center;
  font-weight:600;
- font-size:16px;
- background:#fff;
+ background:rgba(255,255,255,0.7);
+ backdrop-filter:blur(12px);
  border-bottom:1px solid #eee;
- transition:.2s;
 }
 
 /* CARD */
 .box{
  margin:10px;
  padding:16px;
- border-radius:16px;
+ border-radius:18px;
  background:var(--card);
- box-shadow:0 3px 12px rgba(0,0,0,0.04);
+ box-shadow:0 4px 20px rgba(0,0,0,0.05);
 }
 
 /* TEXT */
-.big{font-size:36px;font-weight:800;}
-.mid{font-size:18px;font-weight:600;}
-.small{font-size:13px;color:#666;}
+.big{font-size:38px;font-weight:800;text-align:center;}
+.mid{font-size:17px;font-weight:600;}
+.small{font-size:13px;color:#666;text-align:center;}
 
 /* STEP */
 .stepWrap{
@@ -57,33 +53,15 @@ body{
  align-items:center;
 }
 .stepBtn{
- width:60px;height:60px;
+ width:62px;height:62px;
  border-radius:50%;
  border:none;
  font-size:24px;
  background:#e9e9f5;
 }
 .value{
- font-size:42px;
+ font-size:44px;
  font-weight:800;
-}
-
-/* RESULT */
-.subInfo{
- margin-top:6px;
- font-size:14px;
- color:#666;
- text-align:center;
-}
-
-/* INPUT */
-input{
- width:100%;
- padding:14px;
- border-radius:12px;
- border:1px solid #ddd;
- font-size:16px;
- margin-top:8px;
 }
 
 /* SEGMENT */
@@ -92,14 +70,15 @@ input{
  background:#e9e9f5;
  border-radius:12px;
  overflow:hidden;
+ margin-top:10px;
 }
 .seg button{
  flex:1;
- border:none;
  padding:14px;
- font-size:17px;
- font-weight:600;
+ border:none;
  background:transparent;
+ font-size:16px;
+ font-weight:600;
 }
 .seg .active{
  background:white;
@@ -107,35 +86,26 @@ input{
  box-shadow:0 2px 6px rgba(0,0,0,0.08);
 }
 
-/* HISTORY */
-.item{
- background:#fafafa;
- padding:12px;
- margin-top:8px;
+/* INPUT */
+input{
+ width:100%;
+ padding:14px;
  border-radius:12px;
+ border:1px solid #ddd;
+ margin-top:8px;
 }
 
-/* BOTTOM */
-.bottom{
- position:fixed;
- bottom:0;
+/* BUTTON */
+.save{
  width:100%;
- display:flex;
- gap:8px;
- padding:10px;
- background:white;
- border-top:1px solid #eee;
-}
-.bottom button{
- flex:1;
  padding:16px;
  border:none;
  border-radius:14px;
- font-size:16px;
+ background:var(--main);
  color:white;
+ font-size:16px;
+ margin-top:10px;
 }
-.save{background:var(--main)}
-.clear{background:#ff3b30}
 </style>
 </head>
 
@@ -163,6 +133,15 @@ input{
 </div>
 </div>
 
+<!-- MODE -->
+<div class="box">
+<div class="mid">Trip Type</div>
+<div class="seg">
+<button id="one" onclick="setMode('one')">🚕 One Way</button>
+<button id="round" onclick="setMode('round')">🔁 Round Trip</button>
+</div>
+</div>
+
 <!-- RESULT -->
 <div class="box" id="res"></div>
 
@@ -170,36 +149,12 @@ input{
 <div class="box">
 <div class="mid">Actual Fare</div>
 <input id="actual" type="number" placeholder="Enter actual fare">
-</div>
-
-<!-- FILTER -->
-<div class="box">
-<div class="seg">
-<button onclick="setView('day')" id="day">Day</button>
-<button onclick="setView('week')" id="week">Week</button>
-<button onclick="setView('month')" id="month">Month</button>
-</div>
-</div>
-
-<!-- REPORT -->
-<div class="box" id="report"></div>
-
-<!-- HISTORY -->
-<div class="box">
-<div id="history" class="small">Tap Day / Week / Month</div>
-</div>
-
-<div class="bottom">
 <button class="save" onclick="save()">Save</button>
-<button class="clear" onclick="clearData()">Clear</button>
 </div>
 
 <script>
-let data = JSON.parse(localStorage.getItem("fareData")) || [];
-let view = null;
-
-const historyEl = document.getElementById("history");
-const reportEl = document.getElementById("report");
+let mode="one";
+let data=JSON.parse(localStorage.getItem("fareData"))||[];
 
 /* CHANGE */
 function change(id,val){
@@ -210,8 +165,17 @@ function change(id,val){
  calc();
 }
 
-/* TOPBAR */
-function setTop(text,color="#fff"){
+/* MODE */
+function setMode(m){
+ mode=m;
+ document.getElementById("one").classList.remove("active");
+ document.getElementById("round").classList.remove("active");
+ document.getElementById(m==="one"?"one":"round").classList.add("active");
+ calc();
+}
+
+/* TOP */
+function setTop(text,color){
  let t=document.getElementById("topbar");
  t.innerText=text;
  t.style.background=color;
@@ -222,24 +186,32 @@ function calc(){
  let d=+document.getElementById("d").innerText;
  let f=+document.getElementById("f").innerText;
 
- let cost=d*(f/18)+50;
- let fare=Math.max(95+(d*4),cost+30);
- let profit=fare-cost;
+ let cost = d*(f/18);
+
+ let oneFare = Math.max(90, 90 + (d-6)*5, cost + 25);
+
+ let fare = mode==="round"
+   ? (oneFare*2 - 20)
+   : oneFare;
+
+ let profit = fare - (mode==="round" ? cost*2 : cost);
 
  document.getElementById("res").innerHTML=`
-<div class="big" style="text-align:center;">💰 ${Math.round(fare)}</div>
-<div class="subInfo">Cost ${cost.toFixed(0)} • Profit ${profit.toFixed(0)}</div>
+<div class="big">💰 ${Math.round(fare)}</div>
+<div class="small">
+Cost ${Math.round(mode==="round"?cost*2:cost)} • Profit ${Math.round(profit)}
+</div>
 `;
 
- if(profit>40){
+ if(profit>60){
   setTop("🟢 Good Deal","#d4f8e8");
- }else if(profit<25){
+ }else if(profit<30){
   setTop("🔴 Low Profit","#ffe5e5");
  }else{
-  setTop("💬 Ready to Quote","#f2f2f7");
+  setTop("💬 OK","#f2f2f7");
  }
 
- return {fare,profit,cost};
+ return {fare,cost};
 }
 
 /* SAVE */
@@ -255,81 +227,15 @@ function save(){
 
  localStorage.setItem("fareData",JSON.stringify(data));
 
- setTop("✅ Trip Saved","#e0f7ff");
+ setTop("✅ Saved","#e0f7ff");
  setTimeout(()=>setTop("💬 Ready to Quote","#f2f2f7"),1200);
 
  document.getElementById("actual").value="";
- update();
-}
-
-/* CLEAR */
-function clearData(){
- if(confirm("Clear all data?")){
-  data=[];
-  localStorage.removeItem("fareData");
-  update();
- }
-}
-
-/* VIEW */
-function setView(v){
- view=v;
-
- document.querySelectorAll(".seg button")
- .forEach(b=>b.classList.remove("active"));
-
- document.getElementById(v).classList.add("active");
-
- setTop("📊 "+v.toUpperCase());
- update();
-}
-
-/* FILTER */
-function getData(){
- let now=new Date();
- return data.filter(x=>{
-  let t=new Date(x.time);
-
-  if(view==="day") return t.toDateString()===now.toDateString();
-  if(view==="week") return (now-t)/(1000*60*60*24)<=7;
-  if(view==="month") return t.getMonth()===now.getMonth() && t.getFullYear()===now.getFullYear();
- });
-}
-
-/* UPDATE */
-function update(){
-
- if(!view){
-  historyEl.innerHTML="Tap Day / Week / Month";
-  reportEl.innerHTML="";
-  return;
- }
-
- let list=getData();
-
- if(list.length===0){
-  historyEl.innerHTML="📭 No data";
-  reportEl.innerHTML="";
-  return;
- }
-
- let rev=list.reduce((a,b)=>a+b.fare,0);
- let prof=list.reduce((a,b)=>a+b.profit,0);
-
- reportEl.innerHTML=`Trips: ${list.length}<br>Revenue: ${rev}<br>Profit: ${prof}`;
-
- let html="";
- list.slice().reverse().forEach(x=>{
-  let t=new Date(x.time);
-  html+=`<div class="item">💰 ${x.fare}<br><span class="small">${t.toLocaleTimeString()}</span></div>`;
- });
-
- historyEl.innerHTML=html;
 }
 
 /* INIT */
+setMode("one");
 calc();
-update();
 </script>
 
 </body>
