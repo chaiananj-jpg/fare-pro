@@ -3,7 +3,6 @@
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<!-- iOS APP STYLE -->
 <link rel="apple-touch-icon" href="icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Fare Pro">
@@ -17,14 +16,11 @@
  --bg:#f5f5fb;
  --card:rgba(255,255,255,0.9);
 }
-
 body{
  margin:0;
  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
  background:var(--bg);
 }
-
-/* HEADER */
 .header{
  position:sticky;
  top:0;
@@ -36,8 +32,6 @@ body{
  backdrop-filter:blur(10px);
  border-bottom:1px solid #eee;
 }
-
-/* CARD */
 .box{
  margin:12px;
  padding:16px;
@@ -45,13 +39,10 @@ body{
  background:var(--card);
  box-shadow:0 4px 20px rgba(0,0,0,0.05);
 }
-
-/* TEXT */
 .big{font-size:30px;font-weight:700;}
 .mid{font-size:20px;}
 .small{font-size:14px;color:#888;}
 
-/* BUTTON */
 button{
  width:100%;
  border:none;
@@ -63,7 +54,6 @@ button{
 }
 button:active{transform:scale(0.96)}
 
-/* SEGMENT */
 .seg{
  display:flex;
  background:#e9e9f5;
@@ -80,13 +70,7 @@ button:active{transform:scale(0.96)}
  box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
-/* RANGE */
-input[type=range]{
- width:100%;
- accent-color:var(--main);
-}
-
-/* INPUT */
+input[type=range]{width:100%; accent-color:var(--main);}
 input{
  width:100%;
  padding:12px;
@@ -95,12 +79,10 @@ input{
  font-size:16px;
 }
 
-/* STATUS */
 .good{color:#34c759}
 .midc{color:#ff9500}
 .bad{color:#ff3b30}
 
-/* HISTORY */
 .item{
  padding:10px;
  margin-top:6px;
@@ -112,12 +94,20 @@ input{
 
 <body>
 
-<div class="header">🚕 Fare Pro</div>
+<div class="header">🚕 Fare Pro V13</div>
+
+<!-- MODE -->
+<div class="box">
+<div class="seg">
+<button id="manual" class="active" onclick="setMode('manual')">Manual</button>
+<button id="gps" onclick="setMode('gps')">GPS</button>
+</div>
+</div>
 
 <!-- DISTANCE -->
 <div class="box">
 <div class="mid">📏 Distance: <b id="d">6</b> km</div>
-<input type="range" min="1" max="30" value="6" oninput="setDist(this.value)">
+<input id="slider" type="range" min="1" max="30" value="6" oninput="setDist(this.value)">
 </div>
 
 <!-- FUEL -->
@@ -164,6 +154,70 @@ Tap Day / Week / Month to view
 
 let data = JSON.parse(localStorage.getItem("fareData")) || [];
 let view = null;
+let mode = "manual";
+
+/* GPS */
+let watchId=null;
+let last=null;
+let total=0;
+
+function setMode(m){
+ mode=m;
+
+ document.getElementById("manual").classList.remove("active");
+ document.getElementById("gps").classList.remove("active");
+ document.getElementById(m).classList.add("active");
+
+ if(m==="gps"){
+  startGPS();
+  document.getElementById("slider").disabled=true;
+ }else{
+  stopGPS();
+  document.getElementById("slider").disabled=false;
+ }
+}
+
+/* GPS START */
+function startGPS(){
+ total=0;
+ last=null;
+
+ watchId = navigator.geolocation.watchPosition(pos=>{
+  let lat=pos.coords.latitude;
+  let lng=pos.coords.longitude;
+
+  if(last){
+   total += getDist(last.lat,last.lng,lat,lng);
+  }
+
+  last={lat,lng};
+
+  document.getElementById("d").innerText=total.toFixed(2);
+  calc();
+ });
+}
+
+/* GPS STOP */
+function stopGPS(){
+ if(watchId){
+  navigator.geolocation.clearWatch(watchId);
+ }
+}
+
+/* DIST */
+function getDist(a,b,c,d){
+ const R=6371;
+ let dLat=(c-a)*Math.PI/180;
+ let dLon=(d-b)*Math.PI/180;
+
+ let x=Math.sin(dLat/2)**2 +
+ Math.cos(a*Math.PI/180) *
+ Math.cos(c*Math.PI/180) *
+ Math.sin(dLon/2)**2;
+
+ let y=2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));
+ return R*y;
+}
 
 /* INPUT */
 function setDist(v){
@@ -181,13 +235,17 @@ function calc(){
  let f=+document.getElementById("f").innerText;
 
  let cost=d*(f/18)+50;
- let fare=Math.max(95+(d-6)*5,cost+30);
+
+ let base = d <= 6 ? 95 : 95 + (d - 6) * 5;
+ let fare = Math.max(base, cost + 30);
 
  let profit=fare-cost;
+
  let status=profit>40?"good":profit>25?"midc":"bad";
 
  document.getElementById("res").innerHTML=`
 <div class="big">💰 ${fare}</div>
+<div class="small">AI Recommended</div>
 <div class="small">Cost ${cost.toFixed(0)} | Profit ${profit.toFixed(0)}</div>
 <div class="${status}">
 ${status=="good"?"🟢 Good":status=="midc"?"🟡 OK":"🔴 Low"}
@@ -214,6 +272,8 @@ function save(){
  localStorage.setItem("fareData",JSON.stringify(data));
 
  input.value="";
+ input.blur();
+
  update();
 }
 
@@ -238,9 +298,20 @@ function getData(){
  return data.filter(x=>{
   let t=new Date(x.time);
 
-  if(view==="day") return t.toDateString()===now.toDateString();
-  if(view==="week") return (now-t)/(1000*60*60*24)<=7;
-  if(view==="month") return t.getMonth()===now.getMonth();
+  if(view==="day"){
+   return t.toDateString()===now.toDateString();
+  }
+
+  if(view==="week"){
+   let first=new Date();
+   first.setDate(now.getDate()-now.getDay());
+   return t>=first;
+  }
+
+  if(view==="month"){
+   return t.getMonth()===now.getMonth() &&
+          t.getFullYear()===now.getFullYear();
+  }
  });
 }
 
@@ -294,3 +365,4 @@ update();
 
 </body>
 </html>
+
