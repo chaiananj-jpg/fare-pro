@@ -2,23 +2,37 @@
 <html lang="th">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fare Pro V12.1</title>
+
+<!-- iOS APP STYLE -->
+<link rel="apple-touch-icon" href="icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Fare Pro">
+<meta name="theme-color" content="#7c7cff">
+
+<title>Fare Pro</title>
 
 <style>
+:root{
+ --main:#7c7cff;
+ --bg:#f5f5fb;
+ --card:rgba(255,255,255,0.9);
+}
+
 body{
- font-family:-apple-system,BlinkMacSystemFont,sans-serif;
  margin:0;
- background:#f2f2f7;
+ font-family:-apple-system,BlinkMacSystemFont,sans-serif;
+ background:var(--bg);
 }
 
 /* HEADER */
 .header{
  position:sticky;
  top:0;
- padding:12px;
+ padding:14px;
  text-align:center;
  font-weight:700;
- background:rgba(255,255,255,0.8);
+ font-size:18px;
+ background:rgba(255,255,255,0.7);
  backdrop-filter:blur(10px);
  border-bottom:1px solid #eee;
 }
@@ -28,97 +42,108 @@ body{
  margin:12px;
  padding:16px;
  border-radius:20px;
- background:rgba(255,255,255,0.75);
- backdrop-filter:blur(10px);
+ background:var(--card);
  box-shadow:0 4px 20px rgba(0,0,0,0.05);
 }
 
 /* TEXT */
-.big{font-size:28px;font-weight:700;}
-.mid{font-size:18px;}
-.small{font-size:13px;color:#888;}
+.big{font-size:30px;font-weight:700;}
+.mid{font-size:20px;}
+.small{font-size:14px;color:#888;}
 
 /* BUTTON */
 button{
+ width:100%;
  border:none;
  border-radius:14px;
- padding:10px;
+ padding:14px;
  font-size:16px;
- background:#007aff;
- color:#fff;
+ background:var(--main);
+ color:white;
 }
 button:active{transform:scale(0.96)}
 
+/* SEGMENT */
 .seg{
- background:#e5e5ea;
  display:flex;
+ background:#e9e9f5;
  border-radius:12px;
  padding:3px;
 }
 .seg button{
  flex:1;
  background:transparent;
- color:#000;
+ color:#333;
 }
 .seg .active{
- background:#fff;
+ background:white;
  box-shadow:0 2px 5px rgba(0,0,0,0.1);
 }
 
 /* RANGE */
-input[type=range]{width:100%;}
+input[type=range]{
+ width:100%;
+ accent-color:var(--main);
+}
+
+/* INPUT */
+input{
+ width:100%;
+ padding:12px;
+ border-radius:10px;
+ border:1px solid #ddd;
+ font-size:16px;
+}
 
 /* STATUS */
 .good{color:#34c759}
 .midc{color:#ff9500}
 .bad{color:#ff3b30}
 
-/* HISTORY ITEM */
+/* HISTORY */
 .item{
  padding:10px;
  margin-top:6px;
  border-radius:12px;
  background:#fff;
- box-shadow:0 2px 5px rgba(0,0,0,0.05);
 }
 </style>
 </head>
 
 <body>
 
-<div class="header">🚕 Fare Pro V12.1</div>
+<div class="header">🚕 Fare Pro</div>
 
 <!-- DISTANCE -->
 <div class="box">
-<div class="mid">Distance: <b id="d">6</b> km</div>
+<div class="mid">📏 Distance: <b id="d">6</b> km</div>
 <input type="range" min="1" max="30" value="6" oninput="setDist(this.value)">
 </div>
 
 <!-- FUEL -->
 <div class="box">
-<div class="mid">Fuel Price: <b id="f">43</b></div>
+<div class="mid">⛽ Fuel: <b id="f">43</b></div>
 <input type="range" min="30" max="60" value="43" oninput="setFuel(this.value)">
 </div>
 
 <!-- RESULT -->
 <div class="box" id="res"></div>
 
-<!-- ACTUAL FARE -->
+<!-- ACTUAL -->
 <div class="box">
-<div class="mid">Actual Fare</div>
-<input id="actual" type="number" placeholder="Enter actual fare"
-style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;">
+<div class="mid">💵 Actual Fare</div>
+<input id="actual" type="number" placeholder="Enter actual fare">
 </div>
 
-<!-- ACTION -->
+<!-- SAVE -->
 <div class="box">
-<button style="width:100%" onclick="save()">Save Trip</button>
+<button onclick="save()">💾 Save</button>
 </div>
 
 <!-- FILTER -->
 <div class="box">
 <div class="seg">
-<button onclick="setView('day')" id="day" class="active">Day</button>
+<button onclick="setView('day')" id="day">Day</button>
 <button onclick="setView('week')" id="week">Week</button>
 <button onclick="setView('month')" id="month">Month</button>
 </div>
@@ -129,14 +154,16 @@ style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;">
 
 <!-- HISTORY -->
 <div class="box">
-<div class="mid">History</div>
-<div id="history"></div>
+<div class="mid">📊 History</div>
+<div id="history" class="small" style="text-align:center;padding:10px;">
+Tap Day / Week / Month to view
+</div>
 </div>
 
 <script>
 
 let data = JSON.parse(localStorage.getItem("fareData")) || [];
-let view = "day";
+let view = null;
 
 /* INPUT */
 function setDist(v){
@@ -150,123 +177,109 @@ function setFuel(v){
 
 /* CALC */
 function calc(){
+ let d=+document.getElementById("d").innerText;
+ let f=+document.getElementById("f").innerText;
 
- let d = +document.getElementById("d").innerText;
- let f = +document.getElementById("f").innerText;
+ let cost=d*(f/18)+50;
+ let fare=Math.max(95+(d-6)*5,cost+30);
 
- let cost = d*(f/18)+50;
-
- let base = 95 + (d-6)*5;
- let fare = Math.max(base,cost+30);
-
- // AI learning
- let similar = data.filter(x=>Math.abs(x.d-d)<=1);
- if(similar.length>3){
-   let avg = similar.reduce((a,b)=>a+b.fare,0)/similar.length;
-   fare = Math.round((fare+avg)/2);
- }
-
- let profit = fare-cost;
-
- let status = profit>40?"good":profit>25?"midc":"bad";
+ let profit=fare-cost;
+ let status=profit>40?"good":profit>25?"midc":"bad";
 
  document.getElementById("res").innerHTML=`
-<div class="big">💰 ${fare} บาท</div>
+<div class="big">💰 ${fare}</div>
 <div class="small">Cost ${cost.toFixed(0)} | Profit ${profit.toFixed(0)}</div>
 <div class="${status}">
-${status=="good"?"🟢 กำไรดี":status=="midc"?"🟡 พอดี":"🔴 ต่ำ"}
-</div>
-`;
+${status=="good"?"🟢 Good":status=="midc"?"🟡 OK":"🔴 Low"}
+</div>`;
 
- return {fare,profit,d};
+ return {fare,profit,d,cost};
 }
 
 /* SAVE */
 function save(){
+ let c=calc();
+ let input=document.getElementById("actual");
 
- let c = calc();
- let actual = +document.getElementById("actual").value || c.fare;
-
- let cost = c.fare - c.profit;
- let profit = actual - cost;
+ let actual=+input.value || c.fare;
+ let profit=actual - c.cost;
 
  data.push({
-   fare: actual,
-   profit,
-   d: c.d,
-   time: new Date().toISOString()
+  fare:actual,
+  profit:profit,
+  d:c.d,
+  time:new Date().toISOString()
  });
 
- localStorage.setItem("fareData", JSON.stringify(data));
- document.getElementById("actual").value="";
+ localStorage.setItem("fareData",JSON.stringify(data));
 
+ input.value="";
  update();
 }
 
-/* FILTER */
+/* VIEW */
 function setView(v){
- view = v;
+ view=v;
 
- document.querySelectorAll(".seg button").forEach(b=>b.classList.remove("active"));
+ document.querySelectorAll(".seg button")
+ .forEach(b=>b.classList.remove("active"));
+
  document.getElementById(v).classList.add("active");
 
  update();
 }
 
-/* FILTER DATA */
-function getFiltered(){
+/* FILTER */
+function getData(){
+ if(!view) return [];
+
  let now=new Date();
+
  return data.filter(x=>{
-   let t=new Date(x.time);
-   if(view==="day") return t.toDateString()===now.toDateString();
-   if(view==="week") return (now-t)/(1000*60*60*24)<=7;
-   if(view==="month") return t.getMonth()===now.getMonth();
+  let t=new Date(x.time);
+
+  if(view==="day") return t.toDateString()===now.toDateString();
+  if(view==="week") return (now-t)/(1000*60*60*24)<=7;
+  if(view==="month") return t.getMonth()===now.getMonth();
  });
 }
 
 /* UPDATE */
 function update(){
 
- let filtered = getFiltered();
-
- if(filtered.length===0){
-   document.getElementById("history").innerHTML="📭 No data";
-   document.getElementById("report").innerHTML="";
-   return;
+ if(!view){
+  document.getElementById("history").innerHTML=
+  "Tap Day / Week / Month to view";
+  document.getElementById("report").innerHTML="";
+  return;
  }
 
- let rev = filtered.reduce((a,b)=>a+b.fare,0);
- let prof = filtered.reduce((a,b)=>a+b.profit,0);
+ let list=getData();
+
+ if(list.length===0){
+  document.getElementById("history").innerHTML="📭 No data";
+  document.getElementById("report").innerHTML="";
+  return;
+ }
+
+ let rev=list.reduce((a,b)=>a+b.fare,0);
+ let prof=list.reduce((a,b)=>a+b.profit,0);
 
  document.getElementById("report").innerHTML=`
-<div>Trips: ${filtered.length}</div>
+<div>Trips: ${list.length}</div>
 <div>Revenue: ${rev}</div>
 <div>Profit: ${prof}</div>
 `;
 
- // Insight
- let hourMap={};
- filtered.forEach(x=>{
-   let h=new Date(x.time).getHours();
-   hourMap[h]=(hourMap[h]||0)+x.profit;
- });
-
- let peak = Object.keys(hourMap).sort((a,b)=>hourMap[b]-hourMap[a])[0];
-
- document.getElementById("report").innerHTML+=`
-<hr>
-<div>🔥 Peak Hour: ${peak}:00</div>
-`;
-
- // HISTORY
  let html="";
- filtered.slice().reverse().forEach(x=>{
-   let t=new Date(x.time);
-   html+=`
+ list.slice().reverse().forEach(x=>{
+  let t=new Date(x.time);
+
+  html+=`
 <div class="item">
-🕒 ${t.toLocaleTimeString()}  
+🕒 ${t.toLocaleTimeString()} 
 <span style="float:right;">💰${x.fare}</span><br>
-<span class="small">กำไร ${x.profit}</span>
+<span class="small">Profit ${x.profit}</span>
 </div>`;
  });
 
@@ -281,3 +294,4 @@ update();
 
 </body>
 </html>
+
