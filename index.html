@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Fare Pro V14</title>
+<title>Fare Pro</title>
 
 <style>
 :root{
@@ -42,7 +42,7 @@ body{
 }
 
 /* TEXT */
-.big{font-size:40px;font-weight:800;text-align:center;}
+.big{font-size:44px;font-weight:800;text-align:center;}
 .mid{font-size:18px;font-weight:600;}
 .small{font-size:14px;color:#666;text-align:center;}
 
@@ -60,7 +60,7 @@ body{
  background:#e9e9f5;
 }
 .value{
- font-size:42px;
+ font-size:46px;
  font-weight:800;
 }
 
@@ -83,14 +83,6 @@ body{
 .seg .active{
  background:#fff;
  box-shadow:0 2px 6px rgba(0,0,0,0.08);
-}
-
-/* HISTORY */
-.item{
- background:#fafafa;
- padding:12px;
- margin-top:8px;
- border-radius:12px;
 }
 
 /* INPUT */
@@ -132,7 +124,7 @@ input{
 
 <!-- FUEL -->
 <div class="box">
-<div class="mid">Fuel (฿/L)</div>
+<div class="mid">Fuel Price (฿/L)</div>
 <div class="stepWrap">
 <button class="stepBtn" id="fminus">-</button>
 <div id="f" class="value">43</div>
@@ -144,8 +136,8 @@ input{
 <div class="box">
 <div class="mid">Trip Type</div>
 <div class="seg">
-<button id="one">One Way</button>
-<button id="round">Round Trip</button>
+<button id="one">🚕 One Way</button>
+<button id="round">🔁 Round Trip</button>
 </div>
 </div>
 
@@ -155,36 +147,16 @@ input{
 <!-- ACTUAL -->
 <div class="box">
 <div class="mid">Actual Fare</div>
-<input id="actual" type="number">
+<input id="actual" type="number" placeholder="Optional">
 <button class="save" onclick="save()">Save</button>
-</div>
-
-<!-- FILTER -->
-<div class="box">
-<div class="seg">
-<button onclick="setView('day')" id="day">Day</button>
-<button onclick="setView('week')" id="week">Week</button>
-<button onclick="setView('month')" id="month">Month</button>
-</div>
-</div>
-
-<!-- REPORT -->
-<div class="box" id="report"></div>
-
-<!-- HISTORY -->
-<div class="box">
-<div id="history" class="small">Tap Day / Week / Month</div>
 </div>
 
 <script>
 let d=6;
 let f=43;
 let mode="one";
-let view=null;
-let data=JSON.parse(localStorage.getItem("fareData"))||[];
 
-const historyEl=document.getElementById("history");
-const reportEl=document.getElementById("report");
+let data=JSON.parse(localStorage.getItem("fareData"))||[];
 
 /* HOLD */
 let interval;
@@ -237,8 +209,11 @@ function setTop(t,c="#fff"){
 function calc(){
 
  let fare=90+(d-6)*4;
- fare+=(f-43)*0.8;
 
+ // 🔥 dynamic fuel impact
+ fare += (f-43)*0.8;
+
+ // clamp
  if(fare<90) fare=90;
  if(d<=7 && fare>95) fare=95;
  if(d<=10 && fare>105) fare=105;
@@ -251,8 +226,7 @@ function calc(){
 
  res.innerHTML=`
 <div class="big">💰 ${Math.round(finalFare)}</div>
-<div class="small">Range ${Math.round(fare-5)} - ${Math.round(fare+5)}</div>
-<div class="small">Profit ${Math.round(profit)}</div>
+<div class="small">Cost ${Math.round(cost)} | Profit ${Math.round(profit)}</div>
 `;
 
  if(profit>60) setTop("🟢 Good","#d4f8e8");
@@ -279,62 +253,11 @@ function save(){
  setTimeout(()=>setTop("💬 Ready"),1000);
 
  document.getElementById("actual").value="";
- update();
-}
-
-/* VIEW */
-function setView(v){
- view=v;
- document.querySelectorAll(".seg button").forEach(b=>b.classList.remove("active"));
- document.getElementById(v).classList.add("active");
- update();
-}
-
-/* FILTER */
-function getData(){
- let now=new Date();
- return data.filter(x=>{
-  let t=new Date(x.time);
-  if(view==="day") return t.toDateString()===now.toDateString();
-  if(view==="week") return (now-t)/(1000*60*60*24)<=7;
-  if(view==="month") return t.getMonth()===now.getMonth() && t.getFullYear()===now.getFullYear();
- });
-}
-
-/* UPDATE */
-function update(){
- if(!view){
-  historyEl.innerHTML="Tap Day / Week / Month";
-  reportEl.innerHTML="";
-  return;
- }
-
- let list=getData();
-
- if(list.length===0){
-  historyEl.innerHTML="📭 No data";
-  reportEl.innerHTML="";
-  return;
- }
-
- let rev=list.reduce((a,b)=>a+b.fare,0);
- let prof=list.reduce((a,b)=>a+b.profit,0);
-
- reportEl.innerHTML=`Trips: ${list.length}<br>Revenue: ${rev}<br>Profit: ${prof}`;
-
- let html="";
- list.slice().reverse().forEach(x=>{
-  let t=new Date(x.time);
-  html+=`<div class="item">💰 ${x.fare}<br>${t.toLocaleTimeString()}</div>`;
- });
-
- historyEl.innerHTML=html;
 }
 
 /* INIT */
 setMode("one");
 calc();
-update();
 </script>
 
 </body>
