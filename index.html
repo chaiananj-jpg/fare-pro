@@ -14,13 +14,21 @@
 :root{
  --main:#7c7cff;
  --bg:#f5f5fb;
- --card:rgba(255,255,255,0.95);
+ --card:rgba(255,255,255,0.92);
+ --text:#111;
+ --sub:#8e8e93;
+ --good:#34c759;
+ --mid:#ff9500;
+ --bad:#ff3b30;
 }
+
+*{box-sizing:border-box}
 
 body{
  margin:0;
  font-family:-apple-system,BlinkMacSystemFont,sans-serif;
  background:var(--bg);
+ color:var(--text);
 }
 
 /* HEADER */
@@ -32,33 +40,87 @@ body{
  font-weight:700;
  font-size:18px;
  background:rgba(255,255,255,0.7);
- backdrop-filter:blur(10px);
+ backdrop-filter:blur(12px);
+ border-bottom:1px solid #eee;
 }
 
 /* CARD */
 .box{
  margin:10px 12px;
- padding:18px;
+ padding:16px;
  border-radius:18px;
  background:var(--card);
+ backdrop-filter:blur(10px);
  box-shadow:0 4px 20px rgba(0,0,0,0.05);
 }
 
 /* TEXT */
-.big{font-size:34px;font-weight:800;}
-.mid{font-size:20px;}
-.small{font-size:13px;color:#888;}
+.big{font-size:36px;font-weight:800;}
+.mid{font-size:18px;}
+.small{font-size:13px;color:var(--sub);}
 
-/* BUTTON */
-button{
- border:none;
- border-radius:12px;
- padding:12px;
- font-size:15px;
- background:var(--main);
- color:white;
+/* STEP BUTTON */
+.stepWrap{
+ display:flex;
+ justify-content:space-between;
+ align-items:center;
+ margin-top:10px;
 }
-button:active{transform:scale(0.95)}
+.stepBtn{
+ width:56px;
+ height:56px;
+ border-radius:50%;
+ font-size:22px;
+ border:none;
+ background:#e9e9f5;
+}
+.stepBtn:active{transform:scale(0.92)}
+
+.value{
+ font-size:42px;
+ font-weight:800;
+}
+
+/* INPUT */
+input{
+ width:100%;
+ padding:12px;
+ border-radius:12px;
+ border:1px solid #ddd;
+ font-size:16px;
+}
+
+/* SEGMENT */
+.seg{
+ display:flex;
+ background:#e9e9f5;
+ border-radius:12px;
+ overflow:hidden;
+}
+.seg button{
+ flex:1;
+ padding:10px;
+ border:none;
+ background:transparent;
+ font-size:14px;
+}
+.seg .active{
+ background:white;
+ font-weight:600;
+}
+
+/* STATUS */
+.good{color:var(--good)}
+.midc{color:var(--mid)}
+.bad{color:var(--bad)}
+
+/* HISTORY */
+.item{
+ padding:10px;
+ margin-top:6px;
+ border-radius:12px;
+ background:white;
+}
 
 /* BOTTOM BAR */
 .bottom{
@@ -69,53 +131,18 @@ button:active{transform:scale(0.95)}
  padding:10px;
  display:flex;
  gap:8px;
- box-shadow:0 -5px 20px rgba(0,0,0,0.08);
+ box-shadow:0 -6px 20px rgba(0,0,0,0.08);
 }
-
-/* RANGE */
-input[type=range]{
- width:100%;
- accent-color:var(--main);
-}
-
-/* INPUT */
-input{
- width:100%;
- padding:12px;
- border-radius:10px;
- border:1px solid #ddd;
- font-size:16px;
-}
-
-/* SEGMENT */
-.seg{
- display:flex;
- background:#eee;
- border-radius:10px;
- overflow:hidden;
-}
-.seg button{
+.bottom button{
  flex:1;
- background:transparent;
- color:#333;
-}
-.seg .active{
- background:white;
- font-weight:600;
-}
-
-/* STATUS */
-.good{color:#34c759}
-.midc{color:#ff9500}
-.bad{color:#ff3b30}
-
-/* HISTORY */
-.item{
- padding:10px;
- margin-top:6px;
+ padding:14px;
+ border:none;
  border-radius:12px;
- background:#fff;
+ font-size:16px;
+ color:white;
 }
+.save{background:var(--main)}
+.clear{background:#ff3b30}
 </style>
 </head>
 
@@ -124,7 +151,7 @@ input{
 <div class="header">🚕 Fare Pro</div>
 
 <!-- SUMMARY -->
-<div class="box" style="display:flex; justify-content:space-between; text-align:center;">
+<div class="box" style="display:flex;justify-content:space-between;text-align:center;">
 <div><div class="small">Fare</div><div id="sf" class="mid">-</div></div>
 <div><div class="small">Cost</div><div id="sc" class="mid">-</div></div>
 <div><div class="small">Profit</div><div id="sp" class="mid">-</div></div>
@@ -132,22 +159,34 @@ input{
 
 <!-- DISTANCE -->
 <div class="box">
-<div class="mid">📏 Distance: <b id="d">6</b> km</div>
+<div class="mid">📏 Distance</div>
 
-<div style="display:flex; gap:6px; margin:8px 0;">
-<button onclick="setDist(3)">3</button>
-<button onclick="setDist(5)">5</button>
-<button onclick="setDist(7)">7</button>
-<button onclick="setDist(10)">10</button>
+<div class="stepWrap">
+<button class="stepBtn"
+onmousedown="hold('d',-1)" onmouseup="stopHold()" ontouchstart="hold('d',-1)" ontouchend="stopHold()">-</button>
+
+<div class="value" id="d">6</div>
+
+<button class="stepBtn"
+onmousedown="hold('d',1)" onmouseup="stopHold()" ontouchstart="hold('d',1)" ontouchend="stopHold()">+</button>
 </div>
 
-<input type="range" min="1" max="30" value="6" oninput="setDist(this.value)">
+<div class="small" style="text-align:center;">km</div>
 </div>
 
 <!-- FUEL -->
 <div class="box">
-<div class="mid">⛽ Fuel: <b id="f">43</b></div>
-<input type="range" min="30" max="60" value="43" oninput="setFuel(this.value)">
+<div class="mid">⛽ Fuel</div>
+
+<div class="stepWrap">
+<button class="stepBtn"
+onmousedown="hold('f',-1)" onmouseup="stopHold()" ontouchstart="hold('f',-1)" ontouchend="stopHold()">-</button>
+
+<div class="value" id="f">43</div>
+
+<button class="stepBtn"
+onmousedown="hold('f',1)" onmouseup="stopHold()" ontouchstart="hold('f',1)" ontouchend="stopHold()">+</button>
+</div>
 </div>
 
 <!-- RESULT -->
@@ -179,41 +218,43 @@ Tap Day / Week / Month
 </div>
 </div>
 
-<!-- BOTTOM ACTION -->
+<!-- ACTION -->
 <div class="bottom">
-<button style="flex:2;" onclick="save()">💾 Save</button>
-<button style="flex:1;background:#ff3b30;" onclick="clearData()">🗑</button>
+<button class="save" onclick="save()">💾 Save</button>
+<button class="clear" onclick="clearData()">🗑</button>
 </div>
 
 <script>
-
 let data = JSON.parse(localStorage.getItem("fareData")) || [];
-let view = null;
+let view=null;
+let interval;
 
-/* INPUT */
-function setDist(v){
- document.getElementById("d").innerText=v;
+/* HOLD INPUT */
+function hold(id,val){
+ change(id,val);
+ interval=setInterval(()=>change(id,val),120);
+}
+function stopHold(){ clearInterval(interval); }
+
+function change(id,val){
+ let el=document.getElementById(id);
+ let v=+el.innerText+val;
+ if(v<1)v=1;
+ if(v>100)v=100;
+ el.innerText=v;
  calc();
 }
-function setFuel(v){
- document.getElementById("f").innerText=v;
- calc();
-}
 
-/* CALC (improved formula) */
+/* CALC */
 function calc(){
-
  let d=+document.getElementById("d").innerText;
  let f=+document.getElementById("f").innerText;
 
  let cost=d*(f/18)+50;
+ let fare=Math.max(95+(d*4), cost+30);
+ let profit=fare-cost;
 
- let base = 95;
- let fare = Math.max(base + (d*4), cost + 30);
-
- let profit = fare - cost;
-
- let status = profit>40?"good":profit>25?"midc":"bad";
+ let status=profit>40?"good":profit>25?"midc":"bad";
 
  document.getElementById("res").innerHTML=`
 <div style="text-align:center;">
@@ -221,19 +262,18 @@ function calc(){
 <div class="small">Recommended</div>
 </div>
 
-<div style="display:flex; justify-content:space-between; margin-top:10px;">
+<div style="display:flex;justify-content:space-between;margin-top:10px;">
 <div>Cost<br><b>${cost.toFixed(0)}</b></div>
 <div>Profit<br><b>${profit.toFixed(0)}</b></div>
 </div>
 
 <div class="${status}" style="margin-top:8px;">
 ${status=="good"?"🟢 Good":status=="midc"?"🟡 OK":"🔴 Low"}
-</div>
-`;
+</div>`;
 
- document.getElementById("sf").innerText=fare;
- document.getElementById("sc").innerText=cost.toFixed(0);
- document.getElementById("sp").innerText=profit.toFixed(0);
+ sf.innerText=fare;
+ sc.innerText=cost.toFixed(0);
+ sp.innerText=profit.toFixed(0);
 
  return {fare,profit,d,cost};
 }
@@ -251,7 +291,6 @@ function save(){
  });
 
  localStorage.setItem("fareData",JSON.stringify(data));
-
  document.getElementById("actual").value="";
  update();
 }
@@ -259,39 +298,24 @@ function save(){
 /* VIEW */
 function setView(v){
  view=v;
-
- document.querySelectorAll(".seg button")
- .forEach(b=>b.classList.remove("active"));
-
+ document.querySelectorAll(".seg button").forEach(b=>b.classList.remove("active"));
  document.getElementById(v).classList.add("active");
-
  update();
 }
 
-/* FILTER FIX */
+/* FILTER */
 function getData(){
  let now=new Date();
-
  return data.filter(x=>{
   let t=new Date(x.time);
-
   if(view==="day") return t.toDateString()===now.toDateString();
-
-  if(view==="week"){
-   let diff=(now-t)/(1000*60*60*24);
-   return diff<=7;
-  }
-
-  if(view==="month"){
-   return t.getMonth()===now.getMonth() &&
-          t.getFullYear()===now.getFullYear();
-  }
+  if(view==="week") return (now-t)/(1000*60*60*24)<=7;
+  if(view==="month") return t.getMonth()===now.getMonth() && t.getFullYear()===now.getFullYear();
  });
 }
 
 /* UPDATE */
 function update(){
-
  if(!view){
   history.innerHTML="Tap Day / Week / Month";
   report.innerHTML="";
@@ -312,16 +336,14 @@ function update(){
  report.innerHTML=`
 <div>Trips: ${list.length}</div>
 <div>Revenue: ${rev}</div>
-<div>Profit: ${prof}</div>
-`;
+<div>Profit: ${prof}</div>`;
 
  let html="";
  list.slice().reverse().forEach(x=>{
   let t=new Date(x.time);
-
   html+=`
 <div class="item">
-<div style="display:flex; justify-content:space-between;">
+<div style="display:flex;justify-content:space-between;">
 <div>💰 ${x.fare}</div>
 <div class="small">${t.toLocaleTimeString()}</div>
 </div>
@@ -343,7 +365,6 @@ function clearData(){
 
 calc();
 update();
-
 </script>
 
 </body>
